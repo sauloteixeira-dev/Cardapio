@@ -39,7 +39,7 @@ Editor de cardápio (categorias produtos complementos),admin,must,unverified,no,
 Esgotar item rapidamente,admin,should,unverified,no,telas não vistas
 Configurar horários taxas e formas de pagamento,admin,must,unverified,no,telas não vistas
 Login do lojista,admin,must,unverified,yes,/replica-backend: Supabase Auth (e-mail/senha) + middleware protegendo /admin e /api/admin
-Várias lojas na mesma plataforma (multi-loja),saas,must,n/a,"partial — banco e RLS já são multi-tenant (is_store_member), painel ainda não troca de loja na tela",não é feature visível do original mas é necessária para vender como SaaS
+Várias lojas na mesma plataforma (multi-loja),saas,must,n/a,"yes — banco multi-tenant (is_store_member) + painel /admin/plataforma lista todas as lojas e cria lojas novas; só falta trocar de loja sem editar a URL",não é feature visível do original mas é necessária para vender como SaaS
 Assinatura e cobrança mensal das lojas,saas,must,n/a,no,é o seu negócio; preço alvo abaixo do praticado pela Anota AI
 Relatórios de vendas,analytics,should,yes,no,fonte pública
 QR Code para mesas,cardápio,could,yes,no,fonte pública; o checkout tem a opção Consumir no local

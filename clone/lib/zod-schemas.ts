@@ -49,3 +49,14 @@ export const storePatchSchema = z.object({
   slug: z.string().min(1),
   autoPrint: z.boolean().optional(),
 });
+
+export const createStoreSchema = z.object({
+  name: z.string().trim().min(2, "Informe o nome da loja.").max(120),
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/, "Use só letras minúsculas, números e hífen (ex: burger-do-ze)."),
+  ownerEmail: z.string().trim().email("E-mail do dono da loja inválido."),
+  ownerPassword: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres."),
+});

@@ -50,6 +50,27 @@ entrar no painel:
 4. Rode o projeto (`npm install && npm run dev`) e entre em `/admin/entrar` com esse e-mail
    e senha. Vai cair em `/admin/pedidos`, agora atrás de login.
 
+## Painel do dono da plataforma (`/admin/plataforma`)
+
+Separado do painel do lojista: lista todas as lojas cadastradas e cria lojas novas (já com o
+login do dono) sem precisar mexer no SQL Editor. Só quem está na tabela `platform_admins`
+entra — um lojista comum logado recebe 403 ao tentar.
+
+Pra se tornar admin da plataforma (normalmente só você, quem vende o SaaS):
+```sql
+insert into platform_admins (user_id)
+values ('<seu-uuid-de-usuário>') on conflict do nothing;
+```
+(o uuid é o mesmo de **Authentication → Users** no Supabase.)
+
+Depois disso, entre em `/admin/entrar` com esse usuário e o link "Plataforma" aparece no
+painel de pedidos. De lá, "+ Nova loja" cria a loja e o usuário do dono dela num só passo —
+mostra a senha provisória uma vez só, pra você repassar.
+
+Ainda não feito aqui: trocar de loja sem digitar a URL (`/admin/pedidos?loja=slug`), editar
+ou desativar uma loja existente, e o próprio lojista se cadastrar sozinho (ver "Não feito
+nesta passagem" abaixo — é a próxima peça natural quando o SaaS ganhar cobrança).
+
 ## Checklist de segurança
 
 - [x] secrets só em variáveis de ambiente (`.env.local`), `.gitignore` já tinha `.env*`
@@ -80,9 +101,9 @@ entrar no painel:
   desenhado em `store_payment_accounts`) para cada loja.
 - **E-mail transacional:** sem Resend/Postmark ainda — não há nada que precise de e-mail
   nesta fase (confirmação é por WhatsApp, decisão do projeto).
-- **Cadastro público do lojista:** hoje a conta é criada manualmente pelo painel do
-  Supabase (ver "Primeiro acesso do lojista" acima). Uma tela de cadastro é a próxima peça
-  natural quando o SaaS ganhar um plano para assinar.
+- **Cadastro público do lojista:** hoje a conta é criada por você, pelo painel
+  `/admin/plataforma` (ver acima) — não pelo próprio lojista. Uma tela de autocadastro é a
+  próxima peça natural quando o SaaS ganhar um plano para assinar.
 - **Rate limiting:** login, identificação por WhatsApp e criação de pedido ainda aceitam
   qualquer volume de tentativas. Importante antes de abrir para lojistas de verdade.
 - **Exclusão de conta (LGPD):** a função `anonymize_customer()` já existe no banco

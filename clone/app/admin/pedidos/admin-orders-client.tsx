@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { AdminOrderCard } from "@/components/AdminOrderCard";
 import type { OrderT, Store } from "@/lib/types";
 
@@ -107,6 +108,12 @@ export function AdminOrdersClient() {
             <input type="checkbox" checked={store.autoPrint} onChange={(e) => toggleAutoPrint(e.target.checked)} />
             Imprimir comanda (bobina 80mm)
           </label>
+          {/* Visível pra todo lojista logado, mas a rota em si só deixa passar quem está em
+              platform_admins (lib/platform-data.ts) — um lojista comum clica e vê "acesso
+              restrito", nunca dado de loja de outra pessoa. */}
+          <Link href="/admin/plataforma" className="text-sm underline">
+            Plataforma
+          </Link>
           <button type="button" onClick={handleSignOut} className="text-sm text-muted underline">
             Sair
           </button>
