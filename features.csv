@@ -1,0 +1,55 @@
+feature,area,priority,original,clone,notes
+Cardápio público por link da loja (slug),cardápio,must,yes,yes,URL /loja/<slug>; página web pensada para celular
+Cabeçalho da loja (capa logo nome status e pedido mínimo),cardápio,must,yes,"partial — sem capa (foto), só o logo iniciais",S01
+Categorias em abas fixas com rolagem horizontal,cardápio,must,yes,yes,S01 e S02; o ícone de menu ao lado das abas provavelmente lista todas as categorias (não visto aberto)
+Seção Os mais pedidos,cardápio,should,yes,yes,S01 carrossel no topo; critério de seleção desconhecido
+Produto com nome preço e descrição opcional,cardápio,must,yes,yes,S02; a descrição aparece só em alguns itens
+Produto com foto ou cartão com o nome quando não há foto,cardápio,must,yes,partial — sem upload de foto ainda,S01 e S03
+Grupos de complementos com limite de seleção,cardápio,must,yes,yes,S03: grupo adicionais com escolha de até 10 itens; regras de obrigatório e mínimo não vistas
+Busca na loja e busca dentro dos complementos,cardápio,should,yes,no,lupa no cabeçalho de S01; campo Pesquise pelo nome em S03
+Alternar tema claro e escuro,cardápio,could,yes,no,ícone de sol no cabeçalho
+Compartilhar loja e produto,cardápio,could,yes,no,ícone de compartilhar em S01 e S03
+Informações da loja (Mais informações),store,should,yes,no,link em S01; conteúdo não visto
+Loja aberta ou fechada por horário,store,must,yes,no,Aberto até 23h59 visto; estado fechado não visto
+Pedido mínimo,checkout,should,yes,yes,"Pedido mín. R$ 2,00 no cabeçalho; comportamento abaixo do mínimo não visto"
+Quantidade e observação do item,checkout,must,yes,yes,S04 modal após adicionar
+Carrinho com edição e remoção de itens,checkout,must,yes,yes,S05
+Sugestões Peça também no carrinho,checkout,should,yes,no,S05 carrossel de venda adicional
+Identificação por WhatsApp e nome sem senha,checkout,must,yes,yes,S06; o botão só habilita com os dois campos preenchidos
+Escolha entre entrega retirada e consumo no local,checkout,must,yes,partial — entrega desligada por decisão do projeto,S07; retirada sai grátis
+Cadastro de endereço de entrega,checkout,must,unverified,no,tela não vista
+Taxa de entrega por área ou bairro,checkout,must,unverified,no,tela não vista
+Previsão de tempo em faixa de minutos,checkout,should,yes,no,60 a 70 min na entrega e 49 a 59 min no resumo; regra de cálculo desconhecida
+Cupom de desconto,marketing,should,yes,no,S09 campo Você tem um cupom; regras não vistas
+Observações gerais do pedido,checkout,could,yes,no,S09 campo recolhido
+Pagamento por Pix copia e cola com contador,payments,could,yes,no,fase posterior por decisão do projeto; S10 no original. No Mercado Pago a validade mínima do Pix na API de Orders é de 30 minutos (confirmar)
+Pagamento online com cartão de crédito,payments,could,yes,no,fase posterior por decisão do projeto
+Pagamento pelo app Nubank,payments,could,yes,no,S08; funcionamento não visto
+Pagamento na entrega,payments,must,yes,yes,"decisão do projeto: única forma na primeira versão; maquininha do entregador (ou no balcão, na retirada)"
+Taxa de conveniência cobrada do cliente,payments,skip,yes,skip,sem pagamento online na primeira versão não há taxa para o cliente
+Pedido confirmado e acompanhamento,checkout,must,unverified,yes,tela não vista (vem depois do pagamento)
+Histórico de pedidos (aba Pedidos),checkout,should,unverified,partial — só pedidos feitos neste aparelho,aba existe na barra inferior; conteúdo não visto
+Política de privacidade (LGPD),legal,must,yes,no,link em S08 e S09; no clone usar texto próprio da sua empresa
+Barra inferior fixa (Início Pedidos Carrinho),cardápio,must,yes,yes,presente em todas as telas do cliente até o carrinho
+Painel de pedidos em tempo real,admin,must,yes,"partial — consulta a cada 4s, ainda não é Realtime",gerenciador de pedidos citado em fontes públicas; telas não vistas
+Alerta sonoro e notificação de novo pedido,admin,must,unverified,no,"pedido do projeto: o pedido novo aparece na tela do lojista na hora, com som e destaque"
+Aceitar recusar e cancelar pedido,admin,must,unverified,partial — aceitar/recusar feito; cancelar depois de aceito falta,telas não vistas
+Impressão automática da comanda no computador do lojista,admin,must,unverified,partial — modo com janela; o silencioso depende de configuração do Chrome,"decisão do projeto: bobina de 80 mm, ligada por uma caixa de seleção nas configurações; sem impressora o pedido só aparece na tela"
+Editor de cardápio (categorias produtos complementos),admin,must,unverified,no,telas não vistas
+Esgotar item rapidamente,admin,should,unverified,no,telas não vistas
+Configurar horários taxas e formas de pagamento,admin,must,unverified,no,telas não vistas
+Login do lojista,admin,must,unverified,no,telas não vistas
+Várias lojas na mesma plataforma (multi-loja),saas,must,n/a,no,não é feature visível do original mas é necessária para vender como SaaS
+Assinatura e cobrança mensal das lojas,saas,must,n/a,no,é o seu negócio; preço alvo abaixo do praticado pela Anota AI
+Relatórios de vendas,analytics,should,yes,no,fonte pública
+QR Code para mesas,cardápio,could,yes,no,fonte pública; o checkout tem a opção Consumir no local
+Plano fidelidade,marketing,could,yes,no,fonte pública
+Atendente virtual no WhatsApp,integrations,could,yes,no,fase posterior; é a parte mais difícil
+Integração com PDV (Saipos Teknisa),integrations,could,yes,no,fase posterior
+Controle de entregadores,delivery,could,unverified,no,fase posterior
+Marketplace e programa de parceiros,integrations,skip,yes,skip,a rede de parceiros da Anota AI não é reproduzível
+Qualquer vínculo ou integração com o iFood,integrations,skip,yes,skip,regra do projeto: nunca entra no produto
+Conteúdo das lojas (nomes fotos cardápios),content,skip,yes,skip,pertence a cada loja e nunca entra no clone
+Conectar a conta do Mercado Pago do lojista (OAuth),payments,could,n/a,no,fase posterior; desenho já está no architecture.md
+Enviar o pedido pelo WhatsApp (botão do cliente),notifications,must,n/a,yes,decisão do projeto: o cliente envia o pedido para o WhatsApp da loja por um botão na tela de pedido feito; nada é enviado sozinho
+Consentimento para avisos por WhatsApp no checkout,legal,could,n/a,no,só necessário quando houver envio automático (fase posterior)
