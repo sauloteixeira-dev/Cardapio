@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { AdminOrdersClient } from "./admin-orders-client";
 
-// A02 do recon.md, simplificado para a fatia vertical: sem login de lojista ainda
-// (architecture.md > "Essenciais" cuida disso com Supabase Auth, antes de ir ao ar).
+// A02 do recon.md. Protegida pelo middleware.ts (Supabase Auth) — quem chega aqui sem
+// sessão é redirecionado para /admin/entrar antes de qualquer coisa renderizar.
 export default function AdminOrdersPage() {
   return (
     <Suspense fallback={<p className="p-4 text-muted">Carregando…</p>}>

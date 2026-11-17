@@ -1,17 +1,26 @@
 import { NextResponse } from "next/server";
-import { getStoreBySlug, setAutoPrint } from "@/lib/data";
+import { supabaseServer } from "@/lib/supabase/server";
+import { getStoreForMember, isMemberOfStore, setAutoPrint } from "@/lib/admin-data";
+import { storePatchSchema } from "@/lib/zod-schemas";
 
 // PATCH /api/admin/store — architecture.md. Nesta fatia só liga/desliga a impressão
-// automática (PrintSettingToggle do components.md); o resto das configurações (A04) fica
-// para a passagem de "essenciais" do architecture.md > Ordem de construção.
+// automática (PrintSettingToggle do design/components.md); o resto das configurações (A04)
+// fica para a próxima passagem do architecture.md > "Ordem de construção".
 export async function PATCH(req: Request) {
-  const body = await req.json().catch(() => null);
-  const slug = String(body?.slug ?? "");
-  const store = await getStoreBySlug(slug);
-  if (!store) return NextResponse.json({ error: "Loja não encontrada." }, { status: 404 });
+  const parsed = storePatchSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
 
-  if (typeof body?.autoPrint === "boolean") {
-    await setAutoPrint(store.id, body.autoPrint);
+  const supabase = await supabaseServer();
+  const store = await getStoreForMember(supabase, parsed.data.slug);
+  if (!store) return NextResponse.json({ error: "Loja não encontrada." }, { status: 404 });
+  if (!(await isMemberOfStore(supabase, store.id))) {
+    return NextResponse.json({ error: "Você não tem acesso a esta loja." }, { status: 403 });
   }
-  return NextResponse.json({ store: await getStoreBySlug(slug) });
+
+  if (typeof parsed.data.autoPrint === "boolean") {
+    await setAutoPrint(supabase, store.id, parsed.data.autoPrint);
+  }
+
+  const updated = await getStoreForMember(supabase, parsed.data.slug);
+  return NextResponse.json({ store: updated });
 }

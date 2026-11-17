@@ -4,11 +4,12 @@ Código gerado pela `/replica-build`, a partir de `replica/recon.md`,
 `replica/architecture.md` e `replica/design/`. Nenhuma linha vem do original:
 nomes, textos e estrutura de pastas são escritos do zero.
 
-## O que já funciona (fatia vertical)
+## O que já funciona
 
-Uma loja de exemplo (`burgueria-exemplo`), de ponta a ponta, sem banco de
-dados de verdade (os dados vivem na memória do processo — `lib/data.ts` — e
-reiniciam quando o servidor reinicia):
+Uma loja de exemplo (`burgueria-exemplo`), de ponta a ponta, com banco de
+dados de verdade (Postgres via Supabase) e login do lojista — ver
+`replica/backend.md` para subir o banco e criar o primeiro acesso antes do
+passo abaixo:
 
 1. Cliente abre `/loja/burgueria-exemplo`, vê o cardápio por categoria e "Os
    mais pedidos" (S01/S02).
@@ -20,24 +21,26 @@ reiniciam quando o servidor reinicia):
    estão desligados, por decisão do projeto** — e faz o pedido (S07).
 5. Vê a confirmação, com o botão "Enviar pedido pelo WhatsApp" que abre a
    conversa com a loja (S11, nova).
-6. O lojista abre `/admin/pedidos`, vê o pedido chegar (consulta a cada 4s),
-   aceita ou recusa, avança o status e imprime a comanda em bobina de 80mm.
+6. O lojista entra em `/admin/entrar` (Supabase Auth), abre `/admin/pedidos`,
+   vê o pedido chegar (consulta a cada 4s), aceita ou recusa, avança o status
+   e imprime a comanda em bobina de 80mm.
 
 ## Rodar localmente
 
 ```bash
+cp .env.example .env.local   # preencha com os valores do seu projeto Supabase
 npm install
 npm run dev
 # abra http://localhost:3000/loja/burgueria-exemplo
-# e, numa outra aba, http://localhost:3000/admin/pedidos
+# e, numa outra aba, http://localhost:3000/admin/pedidos (pede login)
 ```
+
+Sem `.env.local` preenchido, as rotas que tocam no banco vão dar erro — veja
+`replica/backend.md` > "Subir o banco" para os passos completos (criar o
+projeto no Supabase, rodar a migration e o seed, criar o primeiro usuário).
 
 ## O que falta (ver replica/architecture.md > Ordem de construção)
 
-- Banco de dados de verdade (`replica/schema.sql`) no lugar de `lib/data.ts`
-  — é a `/replica-backend`. As funções de `lib/data.ts` já têm a assinatura
-  que vão ter depois; só o corpo muda.
-- Login do lojista (Supabase Auth) — hoje `/admin/pedidos` é público.
 - Entrega com endereço e taxa por bairro.
 - Mercado Pago na conta do lojista, Pix e cartão online (desenhado e
   desligado por `store.onlinePaymentsEnabled = false`).

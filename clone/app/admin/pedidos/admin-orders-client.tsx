@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AdminOrderCard } from "@/components/AdminOrderCard";
 import type { OrderT, Store } from "@/lib/types";
@@ -10,6 +10,7 @@ import type { OrderT, Store } from "@/lib/types";
 // Supabase Realtime entrar: só a forma de saber que mudou, não a tela.
 export function AdminOrdersClient() {
   const params = useSearchParams();
+  const router = useRouter();
   const slug = params.get("loja") ?? "burgueria-exemplo";
 
   const [store, setStore] = useState<Store | null>(null);
@@ -82,6 +83,12 @@ export function AdminOrdersClient() {
     }
   }
 
+  async function handleSignOut() {
+    await fetch("/api/admin/auth/signout", { method: "POST" });
+    router.push("/admin/entrar");
+    router.refresh();
+  }
+
   if (!store) return <p className="p-4 text-muted">Carregando…</p>;
 
   const pending = orders.filter((o) => o.status === "received");
@@ -95,10 +102,15 @@ export function AdminOrdersClient() {
 
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-lg font-bold">{store.name} · Pedidos</h1>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={store.autoPrint} onChange={(e) => toggleAutoPrint(e.target.checked)} />
-          Imprimir comanda (bobina 80mm)
-        </label>
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={store.autoPrint} onChange={(e) => toggleAutoPrint(e.target.checked)} />
+            Imprimir comanda (bobina 80mm)
+          </label>
+          <button type="button" onClick={handleSignOut} className="text-sm text-muted underline">
+            Sair
+          </button>
+        </div>
       </div>
 
       {!soundOn ? (

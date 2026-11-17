@@ -1,14 +1,18 @@
-// Camada de dados falsa da fatia vertical. Cada função tem a assinatura que vai ter quando
-// a /replica-backend ligar o Postgres de verdade: nenhuma tela chama "memória" diretamente,
-// só estas funções — trocar o corpo delas por consultas SQL não muda nenhum componente.
+// Camada de dados do cardápio e do pedido do CLIENTE FINAL. Fala com o Postgres de
+// verdade (Supabase) usando a chave de serviço (lib/supabase/service.ts), porque quem
+// chama estas funções são só as rotas do servidor em app/api/s/ e app/api/o/ — nunca o
+// navegador direto (ver supabase/migrations/0001_init.sql, "escritas do cliente final
+// passam pelo servidor"). As ações do PAINEL DO LOJISTA (autenticadas, sob RLS de
+// verdade) ficam em lib/admin-data.ts — não aqui.
 //
-// Roda em memória do processo. Serve para ver o fluxo de ponta a ponta; reinicia ao reiniciar
-// o servidor de desenvolvimento. Não é o armazenamento do produto.
+// Cada função mantém a mesma assinatura que tinha na fatia vertical (quando isto era uma
+// camada em memória): nenhuma tela ou rota precisou mudar além do corpo deste arquivo.
 
+import { supabaseService } from "./supabase/service";
 import type {
   Category,
   Customer,
-  OrderStatus,
+  OptionGroupT,
   OrderT,
   Product,
   QuoteInput,
@@ -17,130 +21,202 @@ import type {
   Store,
 } from "./types";
 
-// ---------------------------------------------------------------- seed (loja de exemplo)
+// ---------------------------------------------------------------- conversão banco -> tipos
 
-const store: Store = {
-  id: "store_1",
-  slug: "burgueria-exemplo",
-  name: "Burgueria Exemplo",
-  accentColor: "#3463e0",
-  whatsapp: "35999998888",
-  timezone: "America/Sao_Paulo",
-  minOrderCents: 200,
-  acceptsDelivery: false, // decisão do projeto: entrega ainda não está no escopo desta fatia
-  acceptsPickup: true,
-  acceptsDineIn: true,
-  onlinePaymentsEnabled: false, // decisão do projeto: pagamento só na entrega, por enquanto
-  acceptsCardOnDelivery: true,
-  acceptsCashOnDelivery: false,
-  autoPrint: false,
-  printPaper: "thermal_80mm",
-  isOpenNow: true,
-  opensUntilLabel: "Aberto até 23h59",
-};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapStore(row: any): Store {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    accentColor: row.accent_color,
+    whatsapp: row.whatsapp,
+    timezone: row.timezone,
+    minOrderCents: row.min_order_cents,
+    acceptsDelivery: row.accepts_delivery,
+    acceptsPickup: row.accepts_pickup,
+    acceptsDineIn: row.accepts_dine_in,
+    onlinePaymentsEnabled: row.online_payments_enabled,
+    acceptsCardOnDelivery: row.accepts_card_on_delivery,
+    acceptsCashOnDelivery: row.accepts_cash_on_delivery,
+    autoPrint: row.auto_print,
+    printPaper: row.print_paper,
+    // store_hours ainda não é lido aqui (A04, configurações, é a próxima passagem do
+    // architecture.md) — por ora só reflete a pausa manual da loja.
+    isOpenNow: !row.is_paused,
+    opensUntilLabel: row.is_paused ? "Fechada no momento" : "Aberto agora",
+  };
+}
 
-const categories: Category[] = [
-  { id: "cat_lanches", storeId: store.id, name: "Lanches", position: 0 },
-  { id: "cat_porcoes", storeId: store.id, name: "Porções", position: 1 },
-  { id: "cat_bebidas", storeId: store.id, name: "Bebidas", position: 2 },
-];
+const PRODUCT_SELECT = `
+  id, store_id, category_id, name, description, price_cents, image_url, sold_out,
+  pinned_best_seller, position,
+  product_option_groups (
+    position,
+    option_groups (
+      id, name, min_select, max_select,
+      options ( id, name, price_cents, sold_out, position, active )
+    )
+  )
+`;
 
-const products: Product[] = [
-  {
-    id: "prod_xtudo",
-    storeId: store.id,
-    categoryId: "cat_lanches",
-    name: "X-Tudo",
-    description: "Pão, hambúrguer, bacon, presunto, queijo, alface, tomate, batata palha, ovo.",
-    priceCents: 2300,
-    imageUrl: null,
-    soldOut: false,
-    pinnedBestSeller: true,
-    optionGroups: [
-      {
-        id: "grp_adicionais_xtudo",
-        name: "Adicionais",
-        minSelect: 0,
-        maxSelect: 10,
-        options: [
-          { id: "opt_alface", groupId: "grp_adicionais_xtudo", name: "Alface", priceCents: 200, soldOut: false },
-          { id: "opt_tomate", groupId: "grp_adicionais_xtudo", name: "Tomate", priceCents: 150, soldOut: false },
-          { id: "opt_milho", groupId: "grp_adicionais_xtudo", name: "Milho", priceCents: 200, soldOut: false },
-          { id: "opt_abacaxi", groupId: "grp_adicionais_xtudo", name: "Abacaxi", priceCents: 200, soldOut: false },
-          { id: "opt_batata_palha", groupId: "grp_adicionais_xtudo", name: "Batata palha", priceCents: 150, soldOut: false },
-          { id: "opt_catupiry", groupId: "grp_adicionais_xtudo", name: "Catupiry", priceCents: 300, soldOut: true },
-        ],
-      },
-    ],
-  },
-  {
-    id: "prod_contrafile",
-    storeId: store.id,
-    categoryId: "cat_porcoes",
-    name: "Contra-filé na chapa",
-    description: "300g de contra-filé, 300g de batata frita, cebola e cheiro-verde.",
-    priceCents: 5999,
-    imageUrl: null,
-    soldOut: false,
-    pinnedBestSeller: false,
-    optionGroups: [],
-  },
-  {
-    id: "prod_coca600",
-    storeId: store.id,
-    categoryId: "cat_bebidas",
-    name: "Coca-Cola 600ml",
-    description: null,
-    priceCents: 1000,
-    imageUrl: null,
-    soldOut: false,
-    pinnedBestSeller: true,
-    optionGroups: [],
-  },
-];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapProduct(row: any): Product {
+  const groups: OptionGroupT[] = (row.product_option_groups ?? [])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((pog: any) => pog.option_groups)
+    .filter(Boolean)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((g: any) => ({
+      id: g.id,
+      name: g.name,
+      minSelect: g.min_select,
+      maxSelect: g.max_select,
+      options: (g.options ?? [])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter((o: any) => o.active)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .sort((a: any, b: any) => a.position - b.position)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((o: any) => ({
+          id: o.id,
+          groupId: g.id,
+          name: o.name,
+          priceCents: o.price_cents,
+          soldOut: o.sold_out,
+        })),
+    }));
 
-const customers = new Map<string, Customer>(); // chave: storeId + "|" + telefone
-const orders = new Map<string, OrderT>(); // chave: order.id
-const ordersByToken = new Map<string, string>(); // publicToken -> order.id
-let orderSeq = 0;
+  return {
+    id: row.id,
+    storeId: row.store_id,
+    categoryId: row.category_id,
+    name: row.name,
+    description: row.description,
+    priceCents: row.price_cents,
+    imageUrl: row.image_url,
+    soldOut: row.sold_out,
+    pinnedBestSeller: row.pinned_best_seller,
+    optionGroups: groups,
+  };
+}
+
+async function getStoreById(storeId: string): Promise<Store | null> {
+  const { data, error } = await supabaseService().from("stores").select("*").eq("id", storeId).maybeSingle();
+  if (error || !data) return null;
+  return mapStore(data);
+}
+
+async function mapOrderRow(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  row: any,
+): Promise<OrderT> {
+  const supabase = supabaseService();
+  const [{ data: itemRows }, { data: customerRow }, { data: paymentRow }] = await Promise.all([
+    supabase
+      .from("order_items")
+      .select("product_id, name_snapshot, unit_price_cents, quantity, notes, options, line_total_cents")
+      .eq("order_id", row.id),
+    supabase.from("customers").select("phone, name").eq("id", row.customer_id).maybeSingle(),
+    supabase.from("payments").select("method").eq("order_id", row.id).maybeSingle(),
+  ]);
+
+  return {
+    id: row.id,
+    storeId: row.store_id,
+    number: row.number,
+    customer: { phone: customerRow?.phone ?? "", name: customerRow?.name ?? "" },
+    fulfillment: row.fulfillment,
+    status: row.status,
+    items: (itemRows ?? []).map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (i: any) => ({
+        productId: i.product_id,
+        nameSnapshot: i.name_snapshot,
+        unitPriceCents: i.unit_price_cents,
+        quantity: i.quantity,
+        notes: i.notes ?? "",
+        options: i.options ?? [],
+        lineTotalCents: i.line_total_cents,
+      }),
+    ),
+    subtotalCents: row.subtotal_cents,
+    deliveryFeeCents: row.delivery_fee_cents,
+    serviceFeeCents: row.service_fee_cents,
+    discountCents: row.discount_cents,
+    totalCents: row.total_cents,
+    paymentMethod: (paymentRow?.method as "card_on_delivery" | "cash_on_delivery") ?? "cash_on_delivery",
+    notes: row.notes,
+    publicToken: row.public_token,
+    placedAt: row.placed_at,
+    estimatedMinutesMin: row.estimated_minutes_min,
+    estimatedMinutesMax: row.estimated_minutes_max,
+  };
+}
 
 // ---------------------------------------------------------------- leitura do cardápio
 
 export async function getStoreBySlug(slug: string): Promise<Store | null> {
-  return store.slug === slug ? store : null;
-}
-
-// Painel A04 (configurações) ainda não foi construído nesta fatia — este é só o suficiente
-// para a caixa de seleção "Imprimir comanda quando chegar pedido" funcionar no A02.
-export async function setAutoPrint(storeId: string, value: boolean): Promise<Store> {
-  if (store.id === storeId) store.autoPrint = value;
-  return store;
+  const { data, error } = await supabaseService().from("stores").select("*").eq("slug", slug).maybeSingle();
+  if (error || !data) return null;
+  return mapStore(data);
 }
 
 export async function listCategories(storeId: string): Promise<Category[]> {
-  return categories.filter((c) => c.storeId === storeId).sort((a, b) => a.position - b.position);
+  const { data, error } = await supabaseService()
+    .from("categories")
+    .select("id, store_id, name, position")
+    .eq("store_id", storeId)
+    .eq("active", true)
+    .order("position");
+  if (error || !data) return [];
+  return data.map((c) => ({ id: c.id, storeId: c.store_id, name: c.name, position: c.position }));
 }
 
 export async function listProducts(storeId: string): Promise<Product[]> {
-  return products.filter((p) => p.storeId === storeId);
+  const { data, error } = await supabaseService()
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .eq("store_id", storeId)
+    .eq("active", true)
+    .order("position");
+  if (error || !data) return [];
+  return data.map(mapProduct);
 }
 
 export async function listBestSellers(storeId: string): Promise<Product[]> {
-  return products.filter((p) => p.storeId === storeId && p.pinnedBestSeller);
+  const { data, error } = await supabaseService()
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .eq("store_id", storeId)
+    .eq("active", true)
+    .eq("pinned_best_seller", true)
+    .order("position");
+  if (error || !data) return [];
+  return data.map(mapProduct);
 }
 
 export async function getProduct(storeId: string, productId: string): Promise<Product | null> {
-  return products.find((p) => p.storeId === storeId && p.id === productId) ?? null;
+  const { data, error } = await supabaseService()
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .eq("store_id", storeId)
+    .eq("id", productId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return mapProduct(data);
 }
 
 // ---------------------------------------------------------------- cliente (sem senha)
 
 export async function upsertCustomer(storeId: string, phone: string, name: string): Promise<Customer> {
-  const key = `${storeId}|${phone}`;
-  const existing = customers.get(key);
-  const customer: Customer = { id: existing?.id ?? `cust_${customers.size + 1}`, storeId, phone, name };
-  customers.set(key, customer);
-  return customer;
+  const { data, error } = await supabaseService()
+    .from("customers")
+    .upsert({ store_id: storeId, phone, name }, { onConflict: "store_id,phone" })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return { id: data.id, storeId: data.store_id, phone: data.phone, name: data.name };
 }
 
 // ---------------------------------------------------------------- cálculo do pedido (quote)
@@ -149,6 +225,21 @@ export async function upsertCustomer(storeId: string, phone: string, name: strin
 // valor que veio do cliente.
 
 export async function quote(storeId: string, input: QuoteInput): Promise<QuoteResult> {
+  const empty: QuoteResult = {
+    ok: false,
+    errors: ["Loja não encontrada."],
+    subtotalCents: 0,
+    deliveryFeeCents: 0,
+    serviceFeeCents: 0,
+    discountCents: 0,
+    totalCents: 0,
+    estimatedMinutesMin: null,
+    estimatedMinutesMax: null,
+  };
+
+  const store = await getStoreById(storeId);
+  if (!store) return empty;
+
   const errors: string[] = [];
   let subtotalCents = 0;
 
@@ -197,7 +288,7 @@ export async function quote(storeId: string, input: QuoteInput): Promise<QuoteRe
     );
   }
 
-  const deliveryFeeCents = input.fulfillment === "delivery" ? 0 : 0; // zonas de entrega: fase posterior
+  const deliveryFeeCents = 0; // zonas de entrega: fase posterior
   const serviceFeeCents = 0; // só existe com pagamento online (fase posterior)
   const discountCents = 0; // cupom: fase posterior
   const totalCents = subtotalCents + deliveryFeeCents + serviceFeeCents - discountCents;
@@ -223,20 +314,86 @@ export async function createOrder(
   input: QuoteInput,
   idempotencyKey: string,
 ): Promise<{ order?: OrderT; errors: string[] }> {
-  // idempotência simples (fase real: unique index em (store_id, idempotency_key) no banco)
-  const already = [...orders.values()].find((o) => o.storeId === storeId && (o as unknown as { idempotencyKey?: string }).idempotencyKey === idempotencyKey);
-  if (already) return { order: already, errors: [] };
+  const supabase = supabaseService();
+
+  // idempotência: duplo clique ou nova tentativa de rede com a mesma chave devolve o
+  // pedido já criado, em vez de criar outro (replica/schema.sql > orders.idempotency_key).
+  const { data: existingRow } = await supabase
+    .from("orders")
+    .select("id")
+    .eq("store_id", storeId)
+    .eq("idempotency_key", idempotencyKey)
+    .maybeSingle();
+  if (existingRow) {
+    const existing = await getOrder(existingRow.id);
+    if (existing) return { order: existing, errors: [] };
+  }
 
   const q = await quote(storeId, input);
   if (!q.ok) return { errors: q.errors };
 
-  const cust = await upsertCustomer(storeId, customer.phone, customer.name);
-  orderSeq += 1;
+  const store = await getStoreById(storeId);
+  if (!store) return { errors: ["Loja não encontrada."] };
 
-  const items = [];
+  const cust = await upsertCustomer(storeId, customer.phone, customer.name);
+
+  const lineInputs: { product: Product; line: QuoteInput["items"][number] }[] = [];
   for (const line of input.items) {
     const product = await getProduct(storeId, line.productId);
-    if (!product) continue;
+    if (product) lineInputs.push({ product, line });
+  }
+
+  const { data: numberRow, error: numberError } = await supabase.rpc("next_order_number", {
+    p_store: storeId,
+  });
+  if (numberError || numberRow == null) {
+    return { errors: ["Não foi possível gerar o número do pedido. Tente novamente."] };
+  }
+
+  const paymentMethod: "card_on_delivery" | "cash_on_delivery" = store.acceptsCardOnDelivery
+    ? "card_on_delivery"
+    : "cash_on_delivery";
+
+  const { data: orderRow, error: orderError } = await supabase
+    .from("orders")
+    .insert({
+      store_id: storeId,
+      number: numberRow,
+      customer_id: cust.id,
+      fulfillment: input.fulfillment,
+      status: "received", // sem pagamento online nesta fase: o pedido já entra como recebido
+      subtotal_cents: q.subtotalCents,
+      delivery_fee_cents: q.deliveryFeeCents,
+      service_fee_cents: q.serviceFeeCents,
+      discount_cents: q.discountCents,
+      total_cents: q.totalCents,
+      estimated_minutes_min: q.estimatedMinutesMin,
+      estimated_minutes_max: q.estimatedMinutesMax,
+      idempotency_key: idempotencyKey,
+    })
+    .select()
+    .single();
+
+  if (orderError || !orderRow) {
+    // duas requisições quase simultâneas com a mesma chave: a unique (store_id,
+    // idempotency_key) rejeita a segunda — busca o pedido que a primeira criou, em vez de
+    // devolver erro para quem só clicou duas vezes.
+    if (orderError?.code === "23505") {
+      const { data: raceRow } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("store_id", storeId)
+        .eq("idempotency_key", idempotencyKey)
+        .maybeSingle();
+      if (raceRow) {
+        const raceOrder = await getOrder(raceRow.id);
+        if (raceOrder) return { order: raceOrder, errors: [] };
+      }
+    }
+    return { errors: ["Não foi possível criar o pedido. Tente novamente."] };
+  }
+
+  const itemRows = lineInputs.map(({ product, line }) => {
     const selected: SelectedOption[] = [];
     let unit = product.priceCents;
     for (const optId of line.optionIds) {
@@ -244,85 +401,65 @@ export async function createOrder(
       const grp = product.optionGroups.find((g) => g.options.some((o) => o.id === optId));
       if (!opt || !grp) continue;
       unit += opt.priceCents;
-      selected.push({ groupId: grp.id, groupName: grp.name, optionId: opt.id, optionName: opt.name, priceCents: opt.priceCents });
+      selected.push({
+        groupId: grp.id,
+        groupName: grp.name,
+        optionId: opt.id,
+        optionName: opt.name,
+        priceCents: opt.priceCents,
+      });
     }
-    items.push({
-      productId: product.id,
-      nameSnapshot: product.name,
-      unitPriceCents: unit,
+    return {
+      store_id: storeId,
+      order_id: orderRow.id,
+      product_id: product.id,
+      name_snapshot: product.name,
+      unit_price_cents: unit,
       quantity: line.quantity,
-      notes: line.notes,
+      notes: line.notes || null,
       options: selected,
-      lineTotalCents: unit * line.quantity,
-    });
+      line_total_cents: unit * line.quantity,
+    };
+  });
+
+  const { error: itemsError } = await supabase.from("order_items").insert(itemRows);
+  if (itemsError) {
+    return { errors: ["Pedido criado, mas falhou ao salvar os itens. Fale com a loja pelo WhatsApp."] };
   }
 
-  const order: OrderT & { idempotencyKey: string } = {
-    id: `order_${orderSeq}`,
-    storeId,
-    number: orderSeq,
-    customer: cust,
-    fulfillment: input.fulfillment,
-    status: "received", // sem pagamento online: o pedido já entra como recebido (decisão do projeto)
-    items,
-    subtotalCents: q.subtotalCents,
-    deliveryFeeCents: q.deliveryFeeCents,
-    serviceFeeCents: q.serviceFeeCents,
-    discountCents: q.discountCents,
-    totalCents: q.totalCents,
-    paymentMethod: store.acceptsCardOnDelivery ? "card_on_delivery" : "cash_on_delivery",
-    notes: null,
-    publicToken: `tok_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`,
-    placedAt: new Date().toISOString(),
-    estimatedMinutesMin: q.estimatedMinutesMin,
-    estimatedMinutesMax: q.estimatedMinutesMax,
-    idempotencyKey,
-  };
+  // registro do pagamento: "pendente" porque é pago na entrega, fora da plataforma — não
+  // existe captura online nesta fase (store.onlinePaymentsEnabled = false).
+  await supabase.from("payments").insert({
+    store_id: storeId,
+    order_id: orderRow.id,
+    method: paymentMethod,
+    status: "pending",
+    amount_cents: q.totalCents,
+  });
 
-  orders.set(order.id, order);
-  ordersByToken.set(order.publicToken, order.id);
+  await supabase.from("order_events").insert({
+    store_id: storeId,
+    order_id: orderRow.id,
+    from_status: null,
+    to_status: "received",
+    actor: "customer",
+  });
+
+  const order = await getOrder(orderRow.id);
+  if (!order) return { errors: ["Pedido criado, mas não foi possível carregá-lo de volta."] };
   return { order, errors: [] };
 }
 
-export async function getOrderByToken(token: string): Promise<OrderT | null> {
-  const id = ordersByToken.get(token);
-  if (!id) return null;
-  return orders.get(id) ?? null;
-}
-
-export async function listOrdersForStore(storeId: string): Promise<OrderT[]> {
-  return [...orders.values()]
-    .filter((o) => o.storeId === storeId)
-    .sort((a, b) => b.number - a.number);
-}
-
 export async function getOrder(orderId: string): Promise<OrderT | null> {
-  return orders.get(orderId) ?? null;
+  const { data, error } = await supabaseService().from("orders").select("*").eq("id", orderId).maybeSingle();
+  if (error || !data) return null;
+  return mapOrderRow(data);
 }
 
-const NEXT_STATUS: Record<OrderStatus, OrderStatus[]> = {
-  awaiting_payment: ["received", "cancelled"],
-  received: ["accepted", "rejected"],
-  accepted: ["preparing", "cancelled"],
-  preparing: ["ready", "cancelled"],
-  ready: ["out_for_delivery", "completed", "cancelled"],
-  out_for_delivery: ["completed", "cancelled"],
-  completed: [],
-  cancelled: [],
-  rejected: [],
-};
-
-export async function updateOrderStatus(
-  orderId: string,
-  to: OrderStatus,
-): Promise<{ order?: OrderT; error?: string }> {
-  const order = orders.get(orderId);
-  if (!order) return { error: "Pedido não encontrado." };
-  const allowed = NEXT_STATUS[order.status];
-  if (!allowed.includes(to)) {
-    return { error: `Não dá para ir de "${order.status}" para "${to}".` };
-  }
-  const updated = { ...order, status: to };
-  orders.set(orderId, updated);
-  return { order: updated };
+export async function getOrderByToken(token: string): Promise<OrderT | null> {
+  // "quem tem o token vê o pedido" (replica/schema.sql) — chave de serviço aqui só porque
+  // esta rota não tem sessão de ninguém; a proteção real é o token ser longo e aleatório.
+  const { data, error } = await supabaseService().from("orders").select("*").eq("public_token", token).maybeSingle();
+  if (error || !data) return null;
+  return mapOrderRow(data);
 }

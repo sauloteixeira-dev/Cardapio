@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
-import { updateOrderStatus } from "@/lib/data";
-import type { OrderStatus } from "@/lib/types";
+import { supabaseServer } from "@/lib/supabase/server";
+import { updateOrderStatus } from "@/lib/admin-data";
+import { orderStatusSchema } from "@/lib/zod-schemas";
 
-// PATCH /api/admin/orders/{id}/status — architecture.md. Fatia vertical: sem login de
-// lojista ainda, então qualquer um que abra /admin/pedidos age — a /replica-backend fecha
-// isso com Supabase Auth e a política "is_store_member" antes de ir ao ar.
+// PATCH /api/admin/orders/{id}/status — architecture.md. Protegida pelo middleware.ts; a
+// troca só é aceita se o pedido for de uma loja da qual o usuário logado é membro (RLS,
+// is_store_member em lib/admin-data.ts).
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = await req.json().catch(() => null);
-  const to = body?.status as OrderStatus | undefined;
-  if (!to) return NextResponse.json({ error: "Informe o novo status." }, { status: 400 });
+  const parsed = orderStatusSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Informe o novo status." }, { status: 400 });
 
-  const { order, error } = await updateOrderStatus(id, to);
+  const supabase = await supabaseServer();
+  const { order, error } = await updateOrderStatus(supabase, id, parsed.data.status);
   if (error) return NextResponse.json({ error }, { status: 422 });
   return NextResponse.json({ order });
 }

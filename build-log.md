@@ -24,7 +24,22 @@ Login e cadastro do lojista, editor de cardápio, configurações da loja (A01, 
 relatórios (A05), cupons (A06), Mercado Pago/Pix, entrega com zonas, "Mais informações" da
 loja, tema claro/escuro persistente entre sessões, testes automatizados.
 
+## Backend real (2026-11-17)
+
+Ver `replica/backend.md` para o detalhe completo. Resumo do que mudou:
+
+| ID | o que era | o que passou a ser |
+| --- | --- | --- |
+| dados | `lib/data.ts` em memória (reiniciava a cada `npm run dev`) | Postgres de verdade via Supabase (`clone/supabase/migrations/0001_init.sql` + `seed.sql`) |
+| A02 | `/admin/pedidos` público — qualquer um com a URL via e mexia nos pedidos | `clone/middleware.ts` exige login (Supabase Auth); sem sessão, redireciona para `/admin/entrar` |
+| segurança da loja | rota confiava no `slug` da URL | RLS real (`is_store_member`) em `lib/admin-data.ts` — um lojista não vê pedido de loja da qual não é membro, mesmo pedindo pelo slug certo |
+| validação | nenhuma rota validava o corpo da requisição | `lib/zod-schemas.ts`, usado em toda rota de `/api/s/*` e `/api/admin/*` |
+
+Não feito nesta passagem (decisão, não esquecimento — ver `backend.md` > "Não feito nesta
+passagem"): rate limiting, Stripe (assinatura do SaaS), Mercado Pago/Pix (já desenhados,
+ainda desligados), e-mail, cadastro público do lojista, exclusão de conta (LGPD).
+
 ## Próximo passo
 
-`/replica-backend`: ligar `lib/data.ts` ao Postgres de `replica/schema.sql`, Supabase Auth
-para o painel, e — quando decidido — o Mercado Pago de cada loja.
+`/replica-test`: clicar em cada fluxo (cliente e painel) e escrever os testes de ponta a
+ponta, agora que há banco e login de verdade para testar contra.
