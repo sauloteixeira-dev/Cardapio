@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 // Cliente ligado à sessão do lojista logado (cookies httpOnly, lidos do próprio request).
 // Toda consulta feita com este cliente passa pela RLS de supabase/migrations/0001_init.sql —
@@ -15,7 +15,7 @@ export async function supabaseServer() {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
         try {
           cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
         } catch {
