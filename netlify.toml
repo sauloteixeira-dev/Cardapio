@@ -1,0 +1,7 @@
+# Deploy do cardápio: publica a versão minificada (dist/), não o código-fonte.
+[build]
+  command = "sh build.sh"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
