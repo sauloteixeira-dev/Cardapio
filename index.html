@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cardápio Digital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: apetitoso, direto, de balcão de lanchonete — nada de corporativo.
+IDEA: o cardápio impresso da loja virando app; a sacola é a comanda.
+PICTURE: capa colorida da loja + fotos grandes dos produtos.
+COLOUR and TYPE: cor da própria loja (accent) sobre branco quente; Figtree.
+LAYOUT: coluna única de até 760px no cardápio; painel em abas.
+*/
+:root{--ac:#d92d20;--ink:#1d1a17;--mut:#6f6760;--line:#ece7e1;--bg:#faf8f5;--card:#fff;--ok:#12805c;--r:16px;color-scheme:light}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Figtree,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow-x:clip}
+img{display:block;max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 18px;border-radius:12px;border:0;background:var(--ac);color:#fff;font-weight:700}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.soft{background:color-mix(in srgb,var(--ac) 12%,#fff);color:var(--ac)}
+.btn.danger{background:#fff;color:#b42318;border:1.5px solid #f3c7c2}
+.btn.sm{min-height:38px;padding:0 12px;font-size:14px;border-radius:10px}
+.btn.wide{width:100%}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--ac) 45%,transparent);outline-offset:2px}
+label.f{display:block;margin-bottom:14px;font-weight:600;font-size:14px}
+label.f span.h{display:block;font-weight:400;color:var(--mut);font-size:13px}
+.in{display:block;width:100%;margin-top:6px;min-height:46px;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;font-size:16px}
+textarea.in{min-height:80px;resize:vertical}
+.in:focus{border-color:var(--ac);outline:0}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1 1 140px}
+.muted{color:var(--mut)}.small{font-size:14px}
+.price{white-space:nowrap;font-weight:700}
+.chk{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:600;font-size:15px}
+.chk input{width:20px;height:20px;accent-color:var(--ac)}
+.hide{display:none!important}
+
+/* ===== Cardápio ===== */
+.cover{height:clamp(140px,28vw,220px);background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 55%,#000));background-size:cover;background-position:center}
+.shop{position:relative;margin-top:-44px;background:var(--card);border-radius:var(--r);padding:16px;box-shadow:0 8px 30px rgba(30,20,10,.08);display:flex;gap:14px;align-items:center}
+.logo{width:76px;height:76px;flex:none;border-radius:18px;background:var(--ac) center/cover;color:#fff;display:grid;place-items:center;font-size:30px;font-weight:800;border:3px solid #fff;margin-top:-34px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.shop h1{margin:0;font-size:clamp(22px,5vw,30px);line-height:1.1}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;font-weight:700;background:#e7f6ef;color:var(--ok)}
+.badge.off{background:#fdecea;color:#b42318}
+.cats{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:8px;overflow-x:auto;padding:12px 16px;scrollbar-width:none;max-width:760px;margin:0 auto}
+.cats::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:40px;padding:0 16px;border-radius:99px;border:1.5px solid var(--line);background:#fff;font-weight:600;font-size:15px}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.search{margin:4px 0 6px}
+.cat h2{font-size:21px;margin:22px 0 8px;scroll-margin-top:70px}
+.item{display:flex;gap:14px;width:100%;text-align:left;background:var(--card);border:0;border-bottom:1px solid var(--line);padding:16px 4px}
+.item:hover{background:#fffdfb}
+.item .t{flex:1}.item h3{margin:0 0 4px;font-size:17px}
+.item p{margin:0 0 8px;color:var(--mut);font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item .ph{width:104px;height:104px;flex:none;border-radius:14px;object-fit:cover;background:#f1ece6}
+.item.out{opacity:.5}
+.empty{padding:40px 10px;text-align:center;color:var(--mut)}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 30%);z-index:20}
+.bar .btn{width:100%;max-width:728px;margin:0 auto;display:flex;justify-content:space-between;min-height:56px;font-size:17px;box-shadow:0 10px 28px color-mix(in srgb,var(--ac) 40%,transparent)}
+.foot{padding:40px 16px 110px;text-align:center;color:var(--mut);font-size:13px}
+
+/* Sheet / modal */
+.ov{position:fixed;inset:0;background:rgba(20,14,8,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:#fff;width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;animation:up .22s ease}
+@media(min-width:700px){.ov{align-items:center}.sheet{border-radius:22px}}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+@media(prefers-reduced-motion:reduce){.sheet{animation:none}}
+.sheet .hd{position:sticky;top:0;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);z-index:2}
+.sheet .hd h3{margin:0;font-size:18px}
+.x{width:44px;height:44px;border-radius:50%;border:0;background:#f3efea;font-size:22px;line-height:1}
+.sheet .bd{padding:16px}
+.sheet .ft{position:sticky;bottom:0;background:#fff;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;gap:12px;align-items:center}
+.big{width:100%;aspect-ratio:16/10;object-fit:cover;background:#f1ece6}
+.qty{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:12px;flex:none}
+.qty button{width:44px;height:44px;border:0;background:none;font-size:22px;color:var(--ac);font-weight:700}
+.qty span{min-width:28px;text-align:center;font-weight:700}
+.line{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
+.line .t{flex:1}.line .obs{font-size:13px;color:var(--mut)}
+.seg{display:flex;gap:8px;margin:6px 0 14px;flex-wrap:wrap}
+.seg label{flex:1 1 120px;display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border:1.5px solid var(--line);border-radius:12px;font-weight:600;cursor:pointer;font-size:15px}
+.seg input{position:absolute;opacity:0}
+.seg label:has(input:checked){border-color:var(--ac);background:color-mix(in srgb,var(--ac) 8%,#fff);color:var(--ac)}
+.seg label:has(input:focus-visible){outline:3px solid color-mix(in srgb,var(--ac) 45%,transparent)}
+.tot{display:flex;justify-content:space-between;font-size:15px;padding:4px 0}
+.tot.g{font-size:19px;font-weight:800;padding-top:8px}
+.sec{font-size:13px;font-weight:800;color:var(--mut);margin:20px 0 8px;text-transform:none;letter-spacing:.01em}
+
+/* ===== Painel ===== */
+.top{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.top .wrap{max-width:1040px;display:flex;align-items:center;gap:12px;min-height:64px;flex-wrap:wrap;padding-block:8px}
+.brand{font-weight:800;font-size:19px;display:flex;align-items:center;gap:8px;margin-right:auto}
+.brand i{width:30px;height:30px;border-radius:9px;background:var(--ac);display:inline-block}
+.pw{max-width:1040px;margin:0 auto;padding:20px 16px 80px}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto}
+.tabs button{min-height:46px;padding:0 16px;border:0;background:none;font-weight:700;color:var(--mut);border-bottom:3px solid transparent;flex:none}
+.tabs button.on{color:var(--ink);border-color:var(--ac)}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:16px}
+.card h2{margin:0 0 12px;font-size:20px}
+.share{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.share code{flex:1 1 260px;padding:11px 12px;background:#f6f2ee;border-radius:10px;font-size:14px;overflow-wrap:anywhere}
+.prow{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.prow img,.prow .noimg{width:60px;height:60px;border-radius:12px;object-fit:cover;background:#f1ece6;flex:none}
+.prow .t{flex:1 1 180px}.prow .t b{display:block}
+.prow .acts{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;background:#f3efea;color:var(--mut);margin-left:6px}
+.tag.r{background:#fdecea;color:#b42318}
+.pick{display:flex;gap:14px;align-items:center;margin:6px 0 14px}
+.pick .pv{width:96px;height:96px;border-radius:14px;background:#f1ece6 center/cover;flex:none;display:grid;place-items:center;color:var(--mut);font-size:13px;text-align:center}
+.pick.wide .pv{width:180px;height:80px}
+.hero{min-height:100vh;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:40px;align-items:center;max-width:1100px;margin:0 auto;padding:40px 20px}
+.hero h1{font-size:clamp(34px,5vw,52px);line-height:1.05;margin:0 0 16px;text-wrap:balance}
+.hero p{font-size:18px;color:var(--mut);max-width:34em}
+.hero ul{padding:0;list-style:none;margin:20px 0 0}
+.hero li{padding:6px 0 6px 30px;position:relative;font-weight:600}
+.hero li::before{content:"";position:absolute;left:0;top:11px;width:18px;height:18px;border-radius:6px;background:var(--ac)}
+@media(max-width:820px){.hero{grid-template-columns:1fr;min-height:0;gap:24px}}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;z-index:99;font-weight:600;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.load{padding:80px 20px;text-align:center;color:var(--mut)}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+</head>
+<body>
+<div id="app"><div class="load">Carregando…</div></div>
+<div id="modal"></div>
+
+<script>
+{
+// ====== CONFIG ======
+const SUPABASE_URL = 'https://pqcymhhegqincaiweimw.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_ZyNE6FvWPOq4GDcQS81Q7w_S59sNkhv';
+const BUCKET = 'menu-images';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ====== Utils ======
+const $ = s => document.querySelector(s);
+const app = $('#app'), modal = $('#modal');
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const brl = c => (c / 100).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+const toCents = s => { const n = parseFloat(String(s).replace(/[^\d,.-]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.')); return isNaN(n) ? NaN : Math.round(n*100); };
+const centsIn = c => (c/100).toFixed(2).replace('.',',');
+const digits = s => String(s||'').replace(/\D/g,'');
+const slugify = s => s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
+const store = { get(k,d){try{return JSON.parse(localStorage.getItem(k)) ?? d}catch{return d}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}} };
+let toastT;
+function toast(msg){ let t=$('.toast'); if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t)} t.textContent=msg; t.classList.remove('hide'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.add('hide'),2800); }
+function setAccent(c){ if(/^#[0-9a-f]{6}$/i.test(c||'')) document.documentElement.style.setProperty('--ac', c); }
+function openModal(html){ modal.innerHTML = `<div class="ov" data-close>${html}</div>`; document.body.style.overflow='hidden'; }
+function closeModal(){ modal.innerHTML=''; document.body.style.overflow=''; }
+modal.addEventListener('click', e => { if (e.target.matches('[data-close]') || e.target.closest('.x')) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key==='Escape' && modal.innerHTML) closeModal(); });
+function errMsg(e){
+  const m = (e && (e.message||e.error_description)) || String(e);
+  if (/duplicate key.*slug|stores_slug/i.test(m)) return 'Esse link já está em uso. Escolha outro.';
+  if (/already_has_store/.test(m)) return 'Sua conta já tem uma loja.';
+  if (/Invalid login/i.test(m)) return 'Email ou senha incorretos.';
+  if (/already registered/i.test(m)) return 'Esse email já tem conta. Use "Entrar".';
+  if (/Password should be/i.test(m)) return 'A senha precisa ter pelo menos 6 caracteres.';
+  if (/foreign key|violates.*products_category/i.test(m)) return 'Essa categoria ainda tem produtos. Mova ou apague os produtos antes.';
+  if (/whatsapp_check|stores_whatsapp/i.test(m)) return 'WhatsApp inválido. Use DDD + número, ex.: 35999998888.';
+  if (/Email not confirmed/i.test(m)) return 'Confirme seu email antes de entrar (veja sua caixa de entrada).';
+  return m;
+}
+async function compressImage(file, max=1080){
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width*k); c.height = Math.round(bmp.height*k);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  let blob = await new Promise(r => c.toBlob(r, 'image/webp', .82));
+  if (!blob || blob.type !== 'image/webp') blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .85));
+  return blob;
+}
+async function uploadImage(storeId, file){
+  const blob = await compressImage(file);
+  const ext = blob.type === 'image/webp' ? 'webp' : 'jpg';
+  const path = `${storeId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: blob.type, cacheControl: '31536000' });
+  if (error) throw error;
+  return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+}
+const waNumber = w => { const d = digits(w); return d.length <= 11 ? '55' + d : d; };
+const menuLink = slug => location.origin + location.pathname + '?loja=' + encodeURIComponent(slug);
+
+// ====== ROUTER ======
+const SLUG = new URLSearchParams(location.search).get('loja');
+if (SLUG) Menu(SLUG); else Admin();
+
+// =====================================================================
+//  CARDÁPIO DO CLIENTE
+// =====================================================================
+async function Menu(slug){
+  const { data: st, error } = await sb.from('stores').select('*').eq('slug', slug).maybeSingle();
+  if (error || !st) { app.innerHTML = `<div class="load"><h2>Cardápio não encontrado</h2><p>Confira o link com a loja.</p></div>`; return; }
+  setAccent(st.accent_color); document.title = st.name + ' · Cardápio';
+  const [{ data: cats }, { data: prods }] = await Promise.all([
+    sb.from('categories').select('id,name,position').eq('store_id', st.id).eq('active', true).order('position').order('created_at'),
+    sb.from('products').select('id,category_id,name,description,price_cents,image_url,sold_out,position').eq('store_id', st.id).eq('active', true).order('position').order('created_at')
+  ]);
+  const P = new Map((prods||[]).map(p => [p.id, p]));
+  const KEY = 'cart:' + slug;
+  let cart = store.get(KEY, []).filter(l => P.has(l.id) && !P.get(l.id).sold_out);
+  let q = '';
+  const save = () => { store.set(KEY, cart); renderBar(); };
+  const count = () => cart.reduce((a,l)=>a+l.qty,0);
+  const subtotal = () => cart.reduce((a,l)=>a+l.qty*P.get(l.id).price_cents,0);
+  const open = !st.is_paused;
+  const eta = (a,b) => a!=null && b!=null ? `${a}–${b} min` : a!=null ? `${a} min` : '';
+
+  app.innerHTML = `
+    <div class="cover" ${st.cover_url ? `style="background-image:url('${esc(st.cover_url)}')"` : ''}></div>
+    <div class="wrap">
+      <div class="shop">
+        <div class="logo" ${st.logo_url ? `style="background-image:url('${esc(st.logo_url)}')"` : ''}>${st.logo_url ? '' : esc(st.name.trim()[0]||'').toUpperCase()}</div>
+        <div>
+          <h1>${esc(st.name)}</h1>
+          <div class="small muted" style="margin-top:4px">
+            <span class="badge ${open?'':'off'}">${open?'Aberto':'Fechado no momento'}</span>
+            ${st.accepts_delivery && eta(st.delivery_minutes_min,st.delivery_minutes_max) ? ` · Entrega ${eta(st.delivery_minutes_min,st.delivery_minutes_max)}` : ''}
+            ${st.min_order_cents ? ` · Pedido mín. ${brl(st.min_order_cents)}` : ''}
+          </div>
+        </div>
+      </div>
+      <div class="search"><input class="in" id="q" type="search" placeholder="Buscar no cardápio" aria-label="Buscar no cardápio"></div>
+    </div>
+    <nav class="cats" id="cats"></nav>
+    <main class="wrap" id="list"></main>
+    <div class="foot">Pedidos enviados pelo WhatsApp da loja · pagamento na entrega ou retirada</div>
+    <div class="bar hide" id="bar"><button class="btn" id="openCart"><span id="barN"></span><span>Ver sacola</span><span class="price" id="barT"></span></button></div>`;
+
+  function renderList(){
+    const t = q.trim().toLowerCase();
+    const groups = (cats||[]).map(c => ({ c, items: (prods||[]).filter(p => p.category_id===c.id && (!t || (p.name+' '+(p.description||'')).toLowerCase().includes(t))) })).filter(g => g.items.length);
+    $('#cats').innerHTML = groups.map((g,i) => `<button class="chip ${i===0?'on':''}" data-go="${esc(g.c.id)}">${esc(g.c.name)}</button>`).join('');
+    $('#list').innerHTML = groups.length ? groups.map(g => `
+      <section class="cat" id="c-${esc(g.c.id)}"><h2>${esc(g.c.name)}</h2>
+      ${g.items.map(p => `<button class="item ${p.sold_out?'out':''}" data-p="${esc(p.id)}" ${p.sold_out?'aria-disabled="true"':''}>
+        <div class="t"><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}
+        <span class="price">${p.sold_out?'Esgotado':brl(p.price_cents)}</span></div>
+        ${p.image_url?`<img class="ph" src="${esc(p.image_url)}" alt="" loading="lazy">`:''}
+      </button>`).join('')}</section>`).join('')
+      : `<div class="empty">${t ? 'Nada encontrado pra essa busca.' : 'O cardápio ainda está sendo montado.'}</div>`;
+  }
+  function renderBar(){
+    const n = count();
+    $('#bar').classList.toggle('hide', !n);
+    $('#barN').textContent = n + (n>1?' itens':' item');
+    $('#barT').textContent = brl(subtotal());
+  }
+  renderList(); renderBar();
+
+  $('#q').addEventListener('input', e => { q = e.target.value; renderList(); });
+  $('#cats').addEventListener('click', e => {
+    const b = e.target.closest('[data-go]'); if(!b) return;
+    document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c===b));
+    document.getElementById('c-'+b.dataset.go)?.scrollIntoView({behavior:'smooth'});
+  });
+  $('#list').addEventListener('click', e => {
+    const b = e.target.closest('[data-p]'); if(!b) return;
+    const p = P.get(b.dataset.p); if (p.sold_out) return toast('Esse item está esgotado');
+    productSheet(p);
+  });
+  $('#openCart').addEventListener('click', cartSheet);
+
+  function productSheet(p){
+    let qty = 1;
+    openModal(`<div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(p.name)}">
+      <div class="hd"><h3>${esc(p.name)}</h3><button class="x" aria-label="Fechar">×</button></div>
+      ${p.image_url?`<img class="big" src="${esc(p.image_url)}" alt="">`:''}
+      <div class="bd">
+        ${p.description?`<p class="muted" style="margin-top:0">${esc(p.description)}</p>`:''}
+        <p class="price" style="font-size:20px">${brl(p.price_cents)}</p>
+        <label class="f">Alguma observação? <span class="h">Ex.: sem cebola, ponto da carne…</span>
+          <textarea class="in" id="obs" maxlength="140"></textarea></label>
+      </div>
+      <div class="ft"><div class="qty"><button id="m" aria-label="Diminuir">−</button><span id="qv">1</span><button id="pl" aria-label="Aumentar">+</button></div>
+        <button class="btn" style="flex:1" id="add">Adicionar <span class="price" id="at">${brl(p.price_cents)}</span></button></div>
+    </div>`);
+    const upd = () => { $('#qv').textContent = qty; $('#at').textContent = brl(qty*p.price_cents); };
+    $('#m').onclick = () => { if(qty>1){qty--;upd()} };
+    $('#pl').onclick = () => { qty++; upd(); };
+    $('#add').onclick = () => {
+      const obs = $('#obs').value.trim();
+      const ex = cart.find(l => l.id===p.id && (l.obs||'')===obs);
+      if (ex) ex.qty += qty; else cart.push({ id:p.id, qty, obs });
+      save(); closeModal(); toast(`${qty}× ${p.name} na sacola`);
+    };
+  }
+
+  function cartSheet(){
+    const cust = store.get('cliente', {});
+    const modes = [st.accepts_delivery && ['entrega','Entrega'], st.accepts_pickup && ['retirada','Retirar no local'], st.accepts_dine_in && ['mesa','Comer no local']].filter(Boolean);
+    if (!modes.length) modes.push(['entrega','Entrega']);
+    const mode0 = modes.find(m=>m[0]===cust.mode) ? cust.mode : modes[0][0];
+    openModal(`<div class="sheet" role="dialog" aria-modal="true" aria-label="Sua sacola">
+      <div class="hd"><h3>Sua sacola</h3><button class="x" aria-label="Fechar">×</button></div>
+      <form class="bd" id="ck" novalidate>
+        <div id="lines"></div>
+        <div style="padding:10px 0"><button type="button" class="btn soft sm" data-close>+ Adicionar mais itens</button></div>
+        <div class="sec">SEUS DADOS</div>
+        <div class="row"><label class="f">Nome<input class="in" name="nome" required value="${esc(cust.nome||'')}" autocomplete="name"></label>
+        <label class="f">Telefone <span class="h">opcional</span><input class="in" name="tel" inputmode="tel" value="${esc(cust.tel||'')}" autocomplete="tel"></label></div>
+        <div class="sec">COMO VOCÊ QUER RECEBER?</div>
+        <div class="seg">${modes.map(m=>`<label><input type="radio" name="mode" value="${m[0]}" ${m[0]===mode0?'checked':''}>${m[1]}</label>`).join('')}</div>
+        <div id="addr">
+          <div class="row"><label class="f" style="flex:3 1 200px">Rua<input class="in" name="rua" value="${esc(cust.rua||'')}" autocomplete="address-line1"></label>
+          <label class="f" style="flex:1 1 90px">Número<input class="in" name="num" value="${esc(cust.num||'')}"></label></div>
+          <div class="row"><label class="f">Bairro<input class="in" name="bairro" value="${esc(cust.bairro||'')}"></label>
+          <label class="f">Complemento / referência<input class="in" name="comp" value="${esc(cust.comp||'')}"></label></div>
+        </div>
+        <label class="f hide" id="mesaF">Mesa<input class="in" name="mesa" inputmode="numeric"></label>
+        <div class="sec">PAGAMENTO <span style="font-weight:500">(na entrega ou retirada)</span></div>
+        <div class="seg">${['Pix','Dinheiro','Cartão'].map((m,i)=>`<label><input type="radio" name="pag" value="${m}" ${(cust.pag||'Pix')===m?'checked':''}>${m}</label>`).join('')}</div>
+        <label class="f hide" id="trocoF">Troco para quanto? <span class="h">Deixe vazio se não precisar</span><input class="in" name="troco" inputmode="decimal" placeholder="Ex.: 100"></label>
+        <label class="f">Observação do pedido <span class="h">opcional</span><textarea class="in" name="obs" maxlength="200"></textarea></label>
+        <div id="tots"></div>
+      </form>
+      <div class="ft"><button class="btn wide" id="send" ${open?'':'disabled'}>${open?'Enviar pedido no WhatsApp':'Loja fechada no momento'}</button></div>
+    </div>`);
+    const f = $('#ck');
+    const sync = () => {
+      const m = f.mode.value, pag = f.pag.value;
+      $('#addr').classList.toggle('hide', m!=='entrega');
+      $('#mesaF').classList.toggle('hide', m!=='mesa');
+      $('#trocoF').classList.toggle('hide', pag!=='Dinheiro');
+    };
+    const draw = () => {
+      if (!cart.length) { closeModal(); return; }
+      $('#lines').innerHTML = cart.map((l,i) => { const p=P.get(l.id); return `<div class="line">
+        <div class="t"><b>${esc(p.name)}</b>${l.obs?`<div class="obs">Obs: ${esc(l.obs)}</div>`:''}<div class="price small">${brl(p.price_cents*l.qty)}</div></div>
+        <div class="qty"><button type="button" data-d="${i}" aria-label="Diminuir">${l.qty>1?'−':'🗑'}</button><span>${l.qty}</span><button type="button" data-i="${i}" aria-label="Aumentar">+</button></div></div>`; }).join('');
+      const sub = subtotal(), min = st.min_order_cents||0;
+      $('#tots').innerHTML = `<div class="tot"><span>Subtotal</span><span class="price">${brl(sub)}</span></div>
+        ${f.mode.value==='entrega'?`<div class="tot muted"><span>Taxa de entrega</span><span>a combinar com a loja</span></div>`:''}
+        <div class="tot g"><span>Total</span><span class="price">${brl(sub)}</span></div>
+        ${sub<min?`<p class="small" style="color:#b42318">Pedido mínimo: ${brl(min)}. Faltam ${brl(min-sub)}.</p>`:''}`;
+      $('#send').disabled = !open || sub < min;
+    };
+    $('#lines').addEventListener('click', e => {
+      const d = e.target.closest('[data-d]'), i = e.target.closest('[data-i]');
+      if (d) { const l = cart[+d.dataset.d]; l.qty--; if(!l.qty) cart.splice(+d.dataset.d,1); }
+      else if (i) cart[+i.dataset.i].qty++; else return;
+      save(); draw();
+    });
+    f.addEventListener('change', () => { sync(); draw(); });
+    sync(); draw();
+    $('#send').onclick = () => {
+      const v = Object.fromEntries(new FormData(f));
+      if (!v.nome.trim()) return f.nome.focus(), toast('Coloque seu nome');
+      if (v.mode==='entrega' && (!v.rua.trim() || !v.num.trim() || !v.bairro.trim())) return toast('Preencha rua, número e bairro');
+      store.set('cliente', { nome:v.nome, tel:v.tel, mode:v.mode, rua:v.rua, num:v.num, bairro:v.bairro, comp:v.comp, pag:v.pag });
+      const L = [];
+      L.push(`*Novo pedido — ${st.name}*`, '');
+      cart.forEach(l => { const p=P.get(l.id); L.push(`${l.qty}x ${p.name} — ${brl(p.price_cents*l.qty)}`); if(l.obs) L.push(`   _Obs: ${l.obs}_`); });
+      L.push('', `*Subtotal:* ${brl(subtotal())}`);
+      if (v.mode==='entrega') L.push('_Taxa de entrega: a combinar_');
+      L.push('', `*Cliente:* ${v.nome.trim()}`); if (v.tel.trim()) L.push(`*Telefone:* ${v.tel.trim()}`);
+      if (v.mode==='entrega') L.push(`*Entrega:* ${v.rua.trim()}, ${v.num.trim()} — ${v.bairro.trim()}${v.comp.trim()?` (${v.comp.trim()})`:''}`);
+      else if (v.mode==='mesa') L.push(`*Comer no local*${v.mesa?` — Mesa ${v.mesa}`:''}`);
+      else L.push('*Retirada no local*');
+      const tc = toCents(v.troco);
+      L.push(`*Pagamento:* ${v.pag}${v.pag==='Dinheiro' && tc>0 ? ` (troco para ${brl(tc)})` : ''}`);
+      if (v.obs.trim()) L.push(`*Obs.:* ${v.obs.trim()}`);
+      if (!st.whatsapp) return toast('A loja ainda não cadastrou o WhatsApp');
+      const url = `https://wa.me/${waNumber(st.whatsapp)}?text=${encodeURIComponent(L.join('\n'))}`;
+      cart = []; save(); closeModal();
+      location.href = url;
+    };
+  }
+}
+
+// =====================================================================
+//  PAINEL DO LOJISTA
+// =====================================================================
+async function Admin(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return Landing();
+  const { data: mem } = await sb.from('store_members').select('store_id').eq('user_id', session.user.id).limit(1);
+  if (!mem?.length) return CreateStore(session);
+  Panel(mem[0].store_id);
+}
+sb.auth.onAuthStateChange((ev) => { if (!SLUG && (ev==='SIGNED_IN'||ev==='SIGNED_OUT')) Admin(); });
+
+function Landing(){
+  let mode = 'login';
+  app.innerHTML = `<div class="hero">
+    <div>
+      <h1>Seu cardápio digital, com pedidos direto no WhatsApp</h1>
+      <p>Cadastre produtos com foto, descrição e preço. Seu cliente monta o pedido pelo celular e ele chega pronto no WhatsApp da loja.</p>
+      <ul><li>Sem taxa por pedido</li><li>Pronto em 10 minutos</li><li>Funciona em qualquer celular, sem baixar app</li></ul>
+    </div>
+    <div class="card" style="padding:24px">
+      <div class="tabs" id="at"><button class="on" data-m="login">Entrar</button><button data-m="signup">Criar conta</button></div>
+      <form id="af">
+        <label class="f">Email<input class="in" name="email" type="email" required autocomplete="email"></label>
+        <label class="f">Senha<input class="in" name="pass" type="password" required minlength="6" autocomplete="current-password"></label>
+        <button class="btn wide" id="ab">Entrar</button>
+        <p class="small muted" id="amsg" style="margin-bottom:0"></p>
+      </form>
+    </div></div>`;
+  $('#at').onclick = e => { const b=e.target.closest('[data-m]'); if(!b) return; mode=b.dataset.m;
+    document.querySelectorAll('#at button').forEach(x=>x.classList.toggle('on',x===b)); $('#ab').textContent = mode==='login'?'Entrar':'Criar conta grátis'; $('#amsg').textContent=''; };
+  $('#af').onsubmit = async e => {
+    e.preventDefault(); const f=e.target, email=f.email.value.trim(), password=f.pass.value;
+    $('#ab').disabled = true; $('#amsg').textContent='';
+    try {
+      if (mode==='login') { const {error} = await sb.auth.signInWithPassword({email,password}); if(error) throw error; }
+      else { const {data,error} = await sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}}); if(error) throw error;
+        if (!data.session) $('#amsg').textContent = 'Conta criada! Enviamos um link pro seu email. Confirme e depois clique em Entrar.'; }
+    } catch(err) { $('#amsg').textContent = errMsg(err); }
+    $('#ab').disabled = false;
+  };
+}
+
+function CreateStore(session){
+  app.innerHTML = `<div class="pw" style="max-width:560px">
+    <div class="card" style="padding:24px"><h2>Vamos criar sua loja</h2>
+    <form id="cs">
+      <label class="f">Nome da loja<input class="in" name="name" required maxlength="60" placeholder="Ex.: Lanchonete do Zé"></label>
+      <label class="f">Link do cardápio <span class="h">Só letras minúsculas, números e hífen</span><input class="in" name="slug" required pattern="[a-z0-9][a-z0-9-]{1,38}[a-z0-9]"></label>
+      <p class="small muted" id="prev" style="margin-top:-6px"></p>
+      <label class="f">WhatsApp que recebe os pedidos <span class="h">DDD + número</span><input class="in" name="wa" inputmode="tel" required placeholder="35 99999-8888"></label>
+      <button class="btn wide">Criar loja</button><p class="small" id="cmsg" style="color:#b42318"></p>
+    </form>
+    <button class="btn ghost sm" id="out">Sair</button></div></div>`;
+  const f = $('#cs'); let touched = false;
+  const pv = () => $('#prev').textContent = f.slug.value ? menuLink(f.slug.value) : '';
+  f.name.oninput = () => { if(!touched) f.slug.value = slugify(f.name.value); pv(); };
+  f.slug.oninput = () => { touched = true; f.slug.value = slugify(f.slug.value); pv(); };
+  $('#out').onclick = () => sb.auth.signOut();
+  f.onsubmit = async e => {
+    e.preventDefault(); const wa = digits(f.wa.value);
+    if (wa.length < 10 || wa.length > 13) return $('#cmsg').textContent = 'WhatsApp inválido. Use DDD + número.';
+    if (!/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(f.slug.value)) return $('#cmsg').textContent = 'Link inválido: mínimo 3 caracteres, sem espaço nem acento.';
+    const { data, error } = await sb.rpc('create_my_store', { p_name: f.name.value, p_slug: f.slug.value, p_whatsapp: wa });
+    if (error) return $('#cmsg').textContent = errMsg(error);
+    Panel(data);
+  };
+}
+
+async function Panel(storeId){
+  let st, cats=[], prods=[], tab = store.get('tab','produtos');
+  async function load(){
+    const [a,b,c] = await Promise.all([
+      sb.from('stores').select('*').eq('id',storeId).single(),
+      sb.from('categories').select('*').eq('store_id',storeId).order('position').order('created_at'),
+      sb.from('products').select('*').eq('store_id',storeId).order('position').order('created_at')
+    ]);
+    st=a.data; cats=b.data||[]; prods=c.data||[]; setAccent(st.accent_color);
+  }
+  await load();
+  function frame(){
+    app.innerHTML = `<header class="top"><div class="wrap">
+      <div class="brand"><i></i>${esc(st.name)}</div>
+      <a class="btn soft sm" href="${esc(menuLink(st.slug))}" target="_blank" rel="noopener">Ver cardápio</a>
+      <button class="btn ghost sm" id="out">Sair</button></div></header>
+      <div class="pw">
+        <div class="card"><h2>Link do seu cardápio</h2>
+          <div class="share"><code id="lk">${esc(menuLink(st.slug))}</code><button class="btn sm" id="cp">Copiar link</button>
+          <a class="btn ghost sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent('Faça seu pedido pelo nosso cardápio: '+menuLink(st.slug))}">Divulgar no WhatsApp</a></div>
+          ${st.is_paused?'<p class="small" style="color:#b42318;margin-bottom:0">A loja está pausada: clientes veem "Fechado" e não conseguem enviar pedido.</p>':''}
+        </div>
+        <nav class="tabs" id="tb">${[['produtos','Produtos'],['categorias','Categorias'],['loja','Minha loja']].map(t=>`<button data-t="${t[0]}" class="${tab===t[0]?'on':''}">${t[1]}</button>`).join('')}</nav>
+        <div id="body"></div></div>`;
+    $('#out').onclick = () => sb.auth.signOut();
+    $('#cp').onclick = async () => { try { await navigator.clipboard.writeText(menuLink(st.slug)); toast('Link copiado!'); } catch { toast('Selecione o link e copie'); } };
+    $('#tb').onclick = e => { const b=e.target.closest('[data-t]'); if(!b) return; tab=b.dataset.t; store.set('tab',tab); frame(); };
+    ({produtos:Products, categorias:Categories, loja:Settings})[tab]();
+  }
+  const refresh = async () => { await load(); frame(); };
+
+  // ---------- Produtos ----------
+  function Products(){
+    const body = $('#body');
+    if (!cats.length) { body.innerHTML = `<div class="card empty"><p>Crie uma categoria primeiro (ex.: Lanches, Bebidas, Porções).</p><button class="btn" id="gc">Criar categoria</button></div>`; $('#gc').onclick=()=>{tab='categorias';frame()}; return; }
+    body.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap"><span class="muted">${prods.length} produto(s)</span><button class="btn" id="np">+ Novo produto</button></div>` +
+      cats.map(c => { const ps = prods.filter(p=>p.category_id===c.id); return `<div class="card"><h2>${esc(c.name)}${c.active?'':'<span class="tag">oculta</span>'}</h2>
+        ${ps.length ? ps.map(p => `<div class="prow">
+          ${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:'<div class="noimg"></div>'}
+          <div class="t"><b>${esc(p.name)}${p.sold_out?'<span class="tag r">esgotado</span>':''}${p.active?'':'<span class="tag">oculto</span>'}</b><span class="price small">${brl(p.price_cents)}</span></div>
+          <div class="acts">
+            <button class="btn ghost sm" data-so="${esc(p.id)}">${p.sold_out?'Tem de novo':'Esgotou'}</button>
+            <button class="btn soft sm" data-ed="${esc(p.id)}">Editar</button></div></div>`).join('') : '<p class="muted small">Nenhum produto nessa categoria.</p>'}
+      </div>`; }).join('');
+    $('#np').onclick = () => productForm();
+    body.onclick = async e => {
+      const so = e.target.closest('[data-so]'), ed = e.target.closest('[data-ed]');
+      if (so) { const p = prods.find(x=>x.id===so.dataset.so); const {error} = await sb.from('products').update({sold_out:!p.sold_out}).eq('id',p.id); if(error) return toast(errMsg(error)); toast(p.sold_out?'Produto disponível':'Marcado como esgotado'); refresh(); }
+      if (ed) productForm(prods.find(x=>x.id===ed.dataset.ed));
+    };
+  }
+  function productForm(p){
+    const isNew = !p; p = p || { name:'', description:'', price_cents:0, category_id:cats[0].id, image_url:null, active:true };
+    let img = p.image_url, file = null;
+    openModal(`<div class="sheet" role="dialog" aria-modal="true"><div class="hd"><h3>${isNew?'Novo produto':'Editar produto'}</h3><button class="x" aria-label="Fechar">×</button></div>
+      <form class="bd" id="pf">
+        <div class="pick"><div class="pv" id="pv" style="${img?`background-image:url('${esc(img)}')`:''}">${img?'':'Sem foto'}</div>
+          <div><label class="btn soft sm" style="cursor:pointer">Escolher foto<input type="file" accept="image/*" id="fi" class="hide"></label>
+          ${img?'<button type="button" class="btn ghost sm" id="rm" style="margin-left:6px">Tirar foto</button>':''}<p class="small muted" style="margin:6px 0 0">A foto é reduzida automaticamente.</p></div></div>
+        <label class="f">Nome<input class="in" name="name" required maxlength="80" value="${esc(p.name)}"></label>
+        <label class="f">Descrição <span class="h">O que vem no produto</span><textarea class="in" name="desc" maxlength="400">${esc(p.description||'')}</textarea></label>
+        <div class="row"><label class="f">Preço (R$)<input class="in" name="price" inputmode="decimal" required value="${isNew?'':centsIn(p.price_cents)}" placeholder="0,00"></label>
+        <label class="f">Categoria<select class="in" name="cat">${cats.map(c=>`<option value="${esc(c.id)}" ${c.id===p.category_id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label></div>
+        <label class="chk"><input type="checkbox" name="active" ${p.active?'checked':''}> Mostrar no cardápio</label>
+        <p class="small" id="pmsg" style="color:#b42318"></p>
+      </form>
+      <div class="ft">${isNew?'':'<button class="btn danger" id="del">Apagar</button>'}<button class="btn" style="flex:1" id="sv">Salvar</button></div></div>`);
+    $('#fi').onchange = e => { file = e.target.files[0]; if(!file) return; const u = URL.createObjectURL(file); $('#pv').style.backgroundImage=`url('${u}')`; $('#pv').textContent=''; };
+    $('#rm') && ($('#rm').onclick = () => { img=null; file=null; $('#pv').style.backgroundImage=''; $('#pv').textContent='Sem foto'; });
+    $('#sv').onclick = async () => {
+      const f = $('#pf'), price = toCents(f.price.value);
+      if (!f.name.value.trim()) return $('#pmsg').textContent='Coloque o nome do produto.';
+      if (isNaN(price) || price<0) return $('#pmsg').textContent='Preço inválido. Ex.: 24,90';
+      $('#sv').disabled = true; $('#sv').textContent = file ? 'Enviando foto…' : 'Salvando…';
+      try {
+        if (file) img = await uploadImage(storeId, file);
+        const row = { name:f.name.value.trim(), description:f.desc.value.trim()||null, price_cents:price, category_id:f.cat.value, image_url:img, active:f.active.checked };
+        const { error } = isNew ? await sb.from('products').insert({ ...row, store_id:storeId, position:prods.length }) : await sb.from('products').update(row).eq('id',p.id);
+        if (error) throw error;
+        closeModal(); toast('Produto salvo'); refresh();
+      } catch(err) { $('#pmsg').textContent = errMsg(err); $('#sv').disabled=false; $('#sv').textContent='Salvar'; }
+    };
+    $('#del') && ($('#del').onclick = async () => {
+      if (!confirm('Apagar "'+p.name+'"? Isso não pode ser desfeito.')) return;
+      const { error } = await sb.from('products').delete().eq('id',p.id);
+      if (error) { // já tem pedidos ligados: só esconde
+        await sb.from('products').update({active:false}).eq('id',p.id); toast('Produto tem pedidos antigos, então foi ocultado.');
+      } else toast('Produto apagado');
+      closeModal(); refresh();
+    });
+  }
+
+  // ---------- Categorias ----------
+  function Categories(){
+    $('#body').innerHTML = `<div class="card"><h2>Nova categoria</h2>
+      <form id="nc" class="share"><input class="in" name="n" placeholder="Ex.: Lanches" required maxlength="40" style="flex:1 1 220px;margin:0"><button class="btn">Adicionar</button></form></div>
+      <div class="card"><h2>Suas categorias</h2>${cats.length?cats.map((c,i)=>`<div class="prow">
+        <div class="t"><b>${esc(c.name)}${c.active?'':'<span class="tag">oculta</span>'}</b><span class="small muted">${prods.filter(p=>p.category_id===c.id).length} produto(s)</span></div>
+        <div class="acts">
+          <button class="btn ghost sm" data-up="${i}" ${i?'':'disabled'} aria-label="Subir">↑</button>
+          <button class="btn ghost sm" data-dn="${i}" ${i<cats.length-1?'':'disabled'} aria-label="Descer">↓</button>
+          <button class="btn ghost sm" data-hd="${i}">${c.active?'Ocultar':'Mostrar'}</button>
+          <button class="btn soft sm" data-rn="${i}">Renomear</button>
+          <button class="btn danger sm" data-rm="${i}">Apagar</button></div></div>`).join(''):'<p class="muted">Nenhuma categoria ainda.</p>'}</div>`;
+    $('#nc').onsubmit = async e => { e.preventDefault(); const n=e.target.n.value.trim(); if(!n) return;
+      const {error} = await sb.from('categories').insert({store_id:storeId,name:n,position:cats.length}); if(error) return toast(errMsg(error)); toast('Categoria criada'); refresh(); };
+    $('#body').onclick = async e => {
+      const b = e.target.closest('button[data-up],button[data-dn],button[data-hd],button[data-rn],button[data-rm]'); if(!b) return;
+      const [k,v] = Object.entries(b.dataset)[0], i=+v, c=cats[i];
+      let error;
+      if (k==='up'||k==='dn') { const arr=[...cats]; const j=k==='up'?i-1:i+1; [arr[i],arr[j]]=[arr[j],arr[i]];
+        const res = await Promise.all(arr.map((x,n)=>sb.from('categories').update({position:n}).eq('id',x.id))); error = res.find(r=>r.error)?.error; }
+      if (k==='hd') ({error} = await sb.from('categories').update({active:!c.active}).eq('id',c.id));
+      if (k==='rn') { const n = prompt('Novo nome da categoria', c.name); if(!n||!n.trim()) return; ({error} = await sb.from('categories').update({name:n.trim()}).eq('id',c.id)); }
+      if (k==='rm') { if(!confirm('Apagar a categoria "'+c.name+'"?')) return; ({error} = await sb.from('categories').delete().eq('id',c.id)); }
+      if (error) return toast(errMsg(error)); refresh();
+    };
+  }
+
+  // ---------- Loja ----------
+  function Settings(){
+    let logo = st.logo_url, cover = st.cover_url, lf=null, cf=null;
+    $('#body').innerHTML = `<form id="sf">
+      <div class="card"><h2>Dados da loja</h2>
+        <label class="f">Nome<input class="in" name="name" required maxlength="60" value="${esc(st.name)}"></label>
+        <label class="f">WhatsApp que recebe os pedidos <span class="h">DDD + número</span><input class="in" name="wa" inputmode="tel" value="${esc(st.whatsapp||'')}"></label>
+        <label class="f">Cor da loja<input class="in" name="color" type="color" value="${esc(st.accent_color)}" style="max-width:120px;padding:4px"></label>
+        <div class="f">Logo</div><div class="pick"><div class="pv" id="lv" style="${logo?`background-image:url('${esc(logo)}')`:''}">${logo?'':'Sem logo'}</div><label class="btn soft sm" style="cursor:pointer">Trocar logo<input type="file" accept="image/*" id="lfi" class="hide"></label></div>
+        <div class="f">Foto de capa</div><div class="pick wide"><div class="pv" id="cv" style="${cover?`background-image:url('${esc(cover)}')`:''}">${cover?'':'Sem capa'}</div><label class="btn soft sm" style="cursor:pointer">Trocar capa<input type="file" accept="image/*" id="cfi" class="hide"></label></div>
+      </div>
+      <div class="card"><h2>Pedidos</h2>
+        <label class="chk"><input type="checkbox" name="del" ${st.accepts_delivery?'checked':''}> Faz entrega</label>
+        <label class="chk"><input type="checkbox" name="pick" ${st.accepts_pickup?'checked':''}> Cliente pode retirar no local</label>
+        <label class="chk"><input type="checkbox" name="dine" ${st.accepts_dine_in?'checked':''}> Consumo no local (mesa)</label>
+        <div class="row" style="margin-top:10px">
+          <label class="f">Pedido mínimo (R$)<input class="in" name="min" inputmode="decimal" value="${centsIn(st.min_order_cents||0)}"></label>
+          <label class="f">Entrega: de (min)<input class="in" name="dmin" type="number" min="0" value="${st.delivery_minutes_min??''}"></label>
+          <label class="f">até (min)<input class="in" name="dmax" type="number" min="0" value="${st.delivery_minutes_max??''}"></label></div>
+        <label class="chk"><input type="checkbox" name="paused" ${st.is_paused?'checked':''}> Pausar loja (aparece "Fechado")</label>
+      </div>
+      <p class="small" id="smsg" style="color:#b42318"></p>
+      <button class="btn" id="ss">Salvar alterações</button></form>`;
+    const prevImg = (inp, box, set) => $(inp).onchange = e => { const fl=e.target.files[0]; if(!fl) return; set(fl); $(box).style.backgroundImage=`url('${URL.createObjectURL(fl)}')`; $(box).textContent=''; };
+    prevImg('#lfi','#lv',x=>lf=x); prevImg('#cfi','#cv',x=>cf=x);
+    $('#sf').onsubmit = async e => {
+      e.preventDefault(); const f=e.target, wa=digits(f.wa.value), min=toCents(f.min.value||'0');
+      if (wa && (wa.length<10||wa.length>13)) return $('#smsg').textContent='WhatsApp inválido. Use DDD + número.';
+      if (!f.del.checked && !f.pick.checked && !f.dine.checked) return $('#smsg').textContent='Escolha pelo menos uma forma de receber o pedido.';
+      $('#ss').disabled=true; $('#ss').textContent='Salvando…';
+      try {
+        if (lf) logo = await uploadImage(storeId, lf);
+        if (cf) cover = await uploadImage(storeId, cf);
+        const n = v => v===''?null:Math.max(0,parseInt(v,10));
+        const { error } = await sb.from('stores').update({ name:f.name.value.trim(), whatsapp:wa||null, accent_color:f.color.value, logo_url:logo, cover_url:cover,
+          accepts_delivery:f.del.checked, accepts_pickup:f.pick.checked, accepts_dine_in:f.dine.checked, min_order_cents:isNaN(min)?0:min,
+          delivery_minutes_min:n(f.dmin.value), delivery_minutes_max:n(f.dmax.value), is_paused:f.paused.checked }).eq('id',storeId);
+        if (error) throw error;
+        toast('Loja atualizada'); refresh();
+      } catch(err) { $('#smsg').textContent=errMsg(err); $('#ss').disabled=false; $('#ss').textContent='Salvar alterações'; }
+    };
+  }
+  frame();
+}
+}
+</script>
+</body>
+</html>
