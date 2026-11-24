@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cardápio Digital</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /*
 VOICE: apetitoso, direto, de balcão de lanchonete — nada de corporativo.
@@ -14,9 +14,9 @@ PICTURE: capa colorida da loja + fotos grandes dos produtos.
 COLOUR and TYPE: cor da própria loja (accent) sobre branco quente; Figtree.
 LAYOUT: coluna única de até 760px no cardápio; painel em abas.
 */
-:root{--ac:#d92d20;--ink:#1d1a17;--mut:#6f6760;--line:#ece7e1;--bg:#faf8f5;--card:#fff;--ok:#12805c;--r:16px;color-scheme:light}
+:root{--ac:#d92d20;--on-ac:#fff;--ink:#1c1813;--mut:#6d665e;--line:#e9e4dd;--bg:#fff;--card:#fff;--mus:#f2b705;--disp:'Big Shoulders Display',Impact,'Arial Narrow',sans-serif;--ok:#12805c;--r:16px;color-scheme:light}
 *{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Figtree,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 'Instrument Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow-x:clip}
 img{display:block;max-width:100%}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -41,29 +41,53 @@ textarea.in{min-height:80px;resize:vertical}
 .chk input{width:20px;height:20px;accent-color:var(--ac)}
 .hide{display:none!important}
 
-/* ===== Cardápio ===== */
-.cover{height:clamp(140px,28vw,220px);background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 55%,#000));background-size:cover;background-position:center}
-.shop{position:relative;margin-top:-44px;background:var(--card);border-radius:var(--r);padding:16px;box-shadow:0 8px 30px rgba(30,20,10,.08);display:flex;gap:14px;align-items:center}
-.logo{width:76px;height:76px;flex:none;border-radius:18px;background:var(--ac) center/cover;color:#fff;display:grid;place-items:center;font-size:30px;font-weight:800;border:3px solid #fff;margin-top:-34px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
-.shop h1{margin:0;font-size:clamp(22px,5vw,30px);line-height:1.1}
-.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;font-weight:700;background:#e7f6ef;color:var(--ok)}
-.badge.off{background:#fdecea;color:#b42318}
-.cats{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:8px;overflow-x:auto;padding:12px 16px;scrollbar-width:none;max-width:760px;margin:0 auto}
+/* ===== Cardápio =====
+   VOICE: lanchonete de bairro, direto e com apetite.
+   IDEA: o quadro de cardápio da parede — nome ........ preço.
+   PICTURE: letreiro da loja na cor dela; fotos à direita das linhas.
+   COLOUR/TYPE: branco, tinta #1c1813, mostarda #f2b705, cor da loja; Big Shoulders + Instrument Sans.
+   LAYOUT: coluna única até 720px, tudo alinhado à esquerda.
+*/
+.sign{position:relative;background:var(--ac);color:var(--on-ac);overflow:hidden}
+.sign::before{content:"";position:absolute;inset:0;background:var(--cv,none) center/cover;mix-blend-mode:multiply;opacity:.55}
+.sign::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:repeating-linear-gradient(90deg,var(--mus) 0 18px,transparent 18px 26px)}
+.sign .wrap{position:relative;padding-top:clamp(28px,7vw,56px);padding-bottom:28px;max-width:720px}
+.logo{width:64px;height:64px;border-radius:50%;background:#fff center/cover;color:var(--ac);display:grid;place-items:center;font:900 30px/1 var(--disp);box-shadow:0 0 0 3px color-mix(in srgb,var(--on-ac) 35%,transparent);margin-bottom:14px}
+.sign h1{margin:0;font:900 clamp(42px,12vw,76px)/.9 var(--disp);letter-spacing:-.005em;text-wrap:balance}
+.facts{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.facts li{padding:5px 11px;border-radius:8px;font-size:14px;font-weight:600;background:color-mix(in srgb,var(--on-ac) 16%,transparent)}
+.facts li.st{background:var(--on-ac);color:var(--ac)}
+.facts li.st.off{background:#1c1813;color:#fff}
+.search{margin:18px 0 0}
+.search .in{background:#f6f3ef;border-color:transparent}
+.cats{position:sticky;top:0;z-index:5;background:#fff;display:flex;gap:22px;overflow-x:auto;padding:0 16px;scrollbar-width:none;max-width:720px;margin:6px auto 0;border-bottom:1px solid var(--line)}
 .cats::-webkit-scrollbar{display:none}
-.chip{flex:none;min-height:40px;padding:0 16px;border-radius:99px;border:1.5px solid var(--line);background:#fff;font-weight:600;font-size:15px}
-.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
-.search{margin:4px 0 6px}
-.cat h2{font-size:21px;margin:22px 0 8px;scroll-margin-top:70px}
-.item{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 16px 16px 18px;margin-bottom:10px;box-shadow:0 1px 3px rgba(30,20,10,.04);transition:border-color .15s,box-shadow .15s}
-.item:hover{border-color:color-mix(in srgb,var(--ac) 35%,var(--line));box-shadow:0 4px 14px rgba(30,20,10,.07)}
-.item .t{flex:1}.item h3{margin:0 0 4px;font-size:17px}
-.item p{margin:0 0 8px;color:var(--mut);font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.item .ph{width:104px;height:104px;flex:none;border-radius:14px;object-fit:cover;background:#f1ece6}
-.item.out{opacity:.5}
+.chip{flex:none;min-height:48px;padding:0;border:0;border-bottom:3px solid transparent;background:none;font-weight:600;font-size:15px;color:var(--mut)}
+.chip.on{color:var(--ink);border-color:var(--ac)}
+#list{max-width:720px}
+.cat{padding-top:8px}
+.cat h2{font:800 34px/1 var(--disp);margin:26px 0 4px;scroll-margin-top:64px;display:flex;align-items:baseline;gap:10px}
+.cat h2 small{font:600 14px 'Instrument Sans',sans-serif;color:var(--mut)}
+.item{display:flex;gap:16px;align-items:flex-start;width:100%;text-align:left;background:none;border:0;border-bottom:1px dashed var(--line);padding:18px 4px 18px 2px}
+.item:last-child{border-bottom:0}
+.item:hover h3{color:var(--ac)}
+.item .t{flex:1}
+.nm{display:flex;align-items:baseline;gap:8px}
+.item h3{margin:0;font:800 23px/1.05 var(--disp);transition:color .15s}
+.lead{flex:1;min-width:16px;border-bottom:2px dotted color-mix(in srgb,var(--ink) 28%,transparent);transform:translateY(-5px)}
+.pz{font:800 23px/1 var(--disp);white-space:nowrap}
+.pz small{font-size:14px;margin-right:2px;font-weight:700}
+.item p{margin:6px 0 0;color:var(--mut);font-size:14.5px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:46ch}
+.item .ph{width:92px;height:92px;flex:none;border-radius:12px;object-fit:cover;background:#f3efea}
+.item.out h3,.item.out .pz{color:var(--mut)}
+.item.out .ph{filter:grayscale(1);opacity:.5}
+.soldtag{display:inline-block;margin-top:8px;font-size:13px;font-weight:700;color:#b42318}
 .empty{padding:40px 10px;text-align:center;color:var(--mut)}
-.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 30%);z-index:20}
-.bar .btn{width:100%;max-width:728px;margin:0 auto;display:flex;justify-content:space-between;min-height:56px;font-size:17px;box-shadow:0 10px 28px color-mix(in srgb,var(--ac) 40%,transparent)}
-.foot{padding:40px 16px 110px;text-align:center;color:var(--mut);font-size:13px}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));z-index:20;pointer-events:none}
+.bar .btn{pointer-events:auto;width:100%;max-width:696px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;min-height:60px;padding:0 10px 0 18px;font-size:17px;background:#1c1813;color:#fff;border-radius:16px;box-shadow:0 12px 30px rgba(28,24,19,.28)}
+.bar .cnt{display:inline-grid;place-items:center;min-width:30px;height:30px;padding:0 8px;border-radius:9px;background:var(--mus);color:#1c1813;font-weight:800;margin-right:10px}
+.bar .tt{font:800 22px/1 var(--disp);background:var(--ac);color:var(--on-ac);padding:10px 14px;border-radius:11px}
+.foot{padding:36px 16px 120px;text-align:center;color:var(--mut);font-size:13px}
 
 /* Sheet / modal */
 .ov{position:fixed;inset:0;background:rgba(20,14,8,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center}
@@ -72,7 +96,7 @@ textarea.in{min-height:80px;resize:vertical}
 @keyframes up{from{transform:translateY(40px);opacity:0}}
 @media(prefers-reduced-motion:reduce){.sheet{animation:none}}
 .sheet .hd{position:sticky;top:0;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);z-index:2}
-.sheet .hd h3{margin:0;font-size:18px}
+.sheet .hd h3{margin:0;font:800 26px/1 var(--disp)}
 .x{width:44px;height:44px;border-radius:50%;border:0;background:#f3efea;font-size:22px;line-height:1}
 .sheet .bd{padding:16px}
 .sheet .ft{position:sticky;bottom:0;background:#fff;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;gap:12px;align-items:center}
@@ -143,13 +167,19 @@ const app = $('#app'), modal = $('#modal');
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const brl = c => (c / 100).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
 const toCents = s => { const n = parseFloat(String(s).replace(/[^\d,.-]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.')); return isNaN(n) ? NaN : Math.round(n*100); };
+const priceHTML = c => { const [r,d] = (c/100).toFixed(2).split('.'); return `<small>R$</small>${Number(r).toLocaleString('pt-BR')},${d}`; };
 const centsIn = c => (c/100).toFixed(2).replace('.',',');
 const digits = s => String(s||'').replace(/\D/g,'');
 const slugify = s => s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
 const store = { get(k,d){try{return JSON.parse(localStorage.getItem(k)) ?? d}catch{return d}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}} };
 let toastT;
 function toast(msg){ let t=$('.toast'); if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t)} t.textContent=msg; t.classList.remove('hide'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.add('hide'),2800); }
-function setAccent(c){ if(/^#[0-9a-f]{6}$/i.test(c||'')) document.documentElement.style.setProperty('--ac', c); }
+function setAccent(c){
+  if(!/^#[0-9a-f]{6}$/i.test(c||'')) return;
+  const r=document.documentElement.style; r.setProperty('--ac', c);
+  const [R,G,B]=[1,3,5].map(i=>{const v=parseInt(c.slice(i,i+2),16)/255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4});
+  r.setProperty('--on-ac', (0.2126*R+0.7152*G+0.0722*B) > 0.45 ? '#1c1813' : '#fff');
+}
 function openModal(html){ modal.innerHTML = `<div class="ov" data-close>${html}</div>`; document.body.style.overflow='hidden'; }
 function closeModal(){ modal.innerHTML=''; document.body.style.overflow=''; }
 modal.addEventListener('click', e => { if (e.target.matches('[data-close]') || e.target.closest('.x')) closeModal(); });
@@ -214,36 +244,32 @@ async function Menu(slug){
   const eta = (a,b) => a!=null && b!=null ? `${a}–${b} min` : a!=null ? `${a} min` : '';
 
   app.innerHTML = `
-    <div class="cover" ${st.cover_url ? `style="background-image:url('${esc(st.cover_url)}')"` : ''}></div>
-    <div class="wrap">
-      <div class="shop">
-        <div class="logo" ${st.logo_url ? `style="background-image:url('${esc(st.logo_url)}')"` : ''}>${st.logo_url ? '' : esc(st.name.trim()[0]||'').toUpperCase()}</div>
-        <div>
-          <h1>${esc(st.name)}</h1>
-          <div class="small muted" style="margin-top:4px">
-            <span class="badge ${open?'':'off'}">${open?'Aberto':'Fechado no momento'}</span>
-            ${st.accepts_delivery && eta(st.delivery_minutes_min,st.delivery_minutes_max) ? ` · Entrega ${eta(st.delivery_minutes_min,st.delivery_minutes_max)}` : ''}
-            ${st.accepts_delivery ? ` · ${fee ? 'Taxa de entrega ' + brl(fee) : 'Entrega grátis'}` : ''}
-            ${st.min_order_cents ? ` · Pedido mín. ${brl(st.min_order_cents)}` : ''}
-          </div>
-        </div>
-      </div>
-      <div class="search"><input class="in" id="q" type="search" placeholder="Buscar no cardápio" aria-label="Buscar no cardápio"></div>
-    </div>
+    <header class="sign" ${st.cover_url ? `style="--cv:url('${esc(st.cover_url)}')"` : ''}><div class="wrap">
+      ${st.logo_url ? `<div class="logo" style="background-image:url('${esc(st.logo_url)}')"></div>` : `<div class="logo">${esc(st.name.trim()[0]||'').toUpperCase()}</div>`}
+      <h1>${esc(st.name)}</h1>
+      <ul class="facts">
+        <li class="st ${open?'':'off'}">${open?'Aberto agora':'Fechado no momento'}</li>
+        ${st.accepts_delivery && eta(st.delivery_minutes_min,st.delivery_minutes_max) ? `<li>Entrega em ${eta(st.delivery_minutes_min,st.delivery_minutes_max)}</li>` : ''}
+        ${st.accepts_delivery ? `<li>${fee ? 'Taxa de entrega ' + brl(fee) : 'Entrega grátis'}</li>` : ''}
+        ${st.min_order_cents ? `<li>Pedido mínimo ${brl(st.min_order_cents)}</li>` : ''}
+      </ul>
+    </div></header>
+    <div class="wrap" style="max-width:720px"><div class="search"><input class="in" id="q" type="search" placeholder="Buscar um lanche, bebida…" aria-label="Buscar no cardápio"></div></div>
     <nav class="cats" id="cats"></nav>
     <main class="wrap" id="list"></main>
     <div class="foot">Pedidos enviados pelo WhatsApp da loja · pagamento na entrega ou retirada</div>
-    <div class="bar hide" id="bar"><button class="btn" id="openCart"><span id="barN"></span><span>Ver sacola</span><span class="price" id="barT"></span></button></div>`;
+    <div class="bar hide" id="bar"><button class="btn" id="openCart"><span><span class="cnt" id="barN"></span>Ver pedido</span><span class="tt" id="barT"></span></button></div>`;
 
   function renderList(){
     const t = q.trim().toLowerCase();
     const groups = (cats||[]).map(c => ({ c, items: (prods||[]).filter(p => p.category_id===c.id && (!t || (p.name+' '+(p.description||'')).toLowerCase().includes(t))) })).filter(g => g.items.length);
     $('#cats').innerHTML = groups.map((g,i) => `<button class="chip ${i===0?'on':''}" data-go="${esc(g.c.id)}">${esc(g.c.name)}</button>`).join('');
     $('#list').innerHTML = groups.length ? groups.map(g => `
-      <section class="cat" id="c-${esc(g.c.id)}"><h2>${esc(g.c.name)}</h2>
+      <section class="cat" id="c-${esc(g.c.id)}"><h2>${esc(g.c.name)} <small>${g.items.length} ${g.items.length>1?'opções':'opção'}</small></h2>
       ${g.items.map(p => `<button class="item ${p.sold_out?'out':''}" data-p="${esc(p.id)}" ${p.sold_out?'aria-disabled="true"':''}>
-        <div class="t"><h3>${esc(p.name)}</h3>${p.description?`<p>${esc(p.description)}</p>`:''}
-        <span class="price">${p.sold_out?'Esgotado':brl(p.price_cents)}</span></div>
+        <div class="t"><div class="nm"><h3>${esc(p.name)}</h3><span class="lead" aria-hidden="true"></span><span class="pz">${priceHTML(p.price_cents)}</span></div>
+        ${p.description?`<p>${esc(p.description)}</p>`:''}
+        ${p.sold_out?'<span class="soldtag">Esgotado hoje</span>':''}</div>
         ${p.image_url?`<img class="ph" src="${esc(p.image_url)}" alt="" loading="lazy">`:''}
       </button>`).join('')}</section>`).join('')
       : `<div class="empty">${t ? 'Nada encontrado pra essa busca.' : 'O cardápio ainda está sendo montado.'}</div>`;
@@ -251,7 +277,7 @@ async function Menu(slug){
   function renderBar(){
     const n = count();
     $('#bar').classList.toggle('hide', !n);
-    $('#barN').textContent = n + (n>1?' itens':' item');
+    $('#barN').textContent = n;
     $('#barT').textContent = brl(subtotal());
   }
   renderList(); renderBar();
