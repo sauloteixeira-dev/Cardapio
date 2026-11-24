@@ -65,8 +65,8 @@ textarea.in{min-height:80px;resize:vertical}
 .chip{flex:none;min-height:48px;padding:0;border:0;border-bottom:3px solid transparent;background:none;font-weight:600;font-size:15px;color:var(--mut)}
 .chip.on{color:var(--ink);border-color:var(--ac)}
 #list{max-width:720px}
-.cat{padding-top:8px}
-.cat h2{font:800 34px/1 var(--disp);margin:26px 0 4px;scroll-margin-top:64px;display:flex;align-items:baseline;gap:10px}
+.cat{padding-top:8px;scroll-margin-top:var(--tabs,50px)}
+.cat h2{font:800 34px/1 var(--disp);margin:26px 0 4px;display:flex;align-items:baseline;gap:10px}
 .cat h2 small{font:600 14px 'Instrument Sans',sans-serif;color:var(--mut)}
 .item{display:flex;gap:16px;align-items:flex-start;width:100%;text-align:left;background:none;border:0;border-bottom:1px dashed var(--line);padding:18px 4px 18px 2px}
 .item:last-child{border-bottom:0}
@@ -301,11 +301,34 @@ async function Menu(slug){
   }
   renderList(); renderBar();
 
+  // Aba ativa acompanha a rolagem; títulos nunca ficam escondidos atrás das abas
+  let lockSpy = 0;
+  const tabsH = () => { const h = $('#cats').offsetHeight; document.documentElement.style.setProperty('--tabs', h + 'px'); return h; };
+  function setTab(id){
+    document.querySelectorAll('.chip').forEach(c => {
+      const on = c.dataset.go === id; c.classList.toggle('on', on);
+      if (on) { const nav = $('#cats'); nav.scrollTo({ left: c.offsetLeft - 16, behavior: 'smooth' }); }
+    });
+  }
+  function spy(){
+    if (Date.now() < lockSpy) return;
+    const line = tabsH() + 24; let cur = null;
+    document.querySelectorAll('.cat').forEach(sec => { if (sec.getBoundingClientRect().top - line <= 0) cur = sec.id.slice(2); });
+    if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) cur = [...document.querySelectorAll('.cat')].pop()?.id.slice(2) || cur;
+    cur = cur || document.querySelector('.cat')?.id.slice(2);
+    const active = document.querySelector('.chip.on')?.dataset.go;
+    if (cur && cur !== active) setTab(cur);
+  }
+  addEventListener('scroll', () => requestAnimationFrame(spy), { passive: true });
+  addEventListener('resize', tabsH); tabsH();
+
   $('#q').addEventListener('input', e => { q = e.target.value; renderList(); });
   $('#cats').addEventListener('click', e => {
     const b = e.target.closest('[data-go]'); if(!b) return;
     document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c===b));
-    document.getElementById('c-'+b.dataset.go)?.scrollIntoView({behavior:'smooth'});
+    const sec = document.getElementById('c-'+b.dataset.go); if (!sec) return;
+    lockSpy = Date.now() + 900; setTab(b.dataset.go);
+    window.scrollTo({ top: sec.getBoundingClientRect().top + scrollY - tabsH(), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   });
   $('#list').addEventListener('click', e => {
     const b = e.target.closest('[data-p]'); if(!b) return;
