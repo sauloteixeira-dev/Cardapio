@@ -209,6 +209,8 @@ async function Menu(slug){
   const count = () => cart.reduce((a,l)=>a+l.qty,0);
   const subtotal = () => cart.reduce((a,l)=>a+l.qty*P.get(l.id).price_cents,0);
   const open = !st.is_paused;
+  const fee = st.delivery_fee_cents || 0;
+  const feeFor = mode => mode === 'entrega' ? fee : 0;
   const eta = (a,b) => a!=null && b!=null ? `${a}–${b} min` : a!=null ? `${a} min` : '';
 
   app.innerHTML = `
@@ -221,6 +223,7 @@ async function Menu(slug){
           <div class="small muted" style="margin-top:4px">
             <span class="badge ${open?'':'off'}">${open?'Aberto':'Fechado no momento'}</span>
             ${st.accepts_delivery && eta(st.delivery_minutes_min,st.delivery_minutes_max) ? ` · Entrega ${eta(st.delivery_minutes_min,st.delivery_minutes_max)}` : ''}
+            ${st.accepts_delivery ? ` · ${fee ? 'Taxa de entrega ' + brl(fee) : 'Entrega grátis'}` : ''}
             ${st.min_order_cents ? ` · Pedido mín. ${brl(st.min_order_cents)}` : ''}
           </div>
         </div>
@@ -335,8 +338,8 @@ async function Menu(slug){
         <div class="qty"><button type="button" data-d="${i}" aria-label="Diminuir">${l.qty>1?'−':'🗑'}</button><span>${l.qty}</span><button type="button" data-i="${i}" aria-label="Aumentar">+</button></div></div>`; }).join('');
       const sub = subtotal(), min = st.min_order_cents||0;
       $('#tots').innerHTML = `<div class="tot"><span>Subtotal</span><span class="price">${brl(sub)}</span></div>
-        ${f.mode.value==='entrega'?`<div class="tot muted"><span>Taxa de entrega</span><span>a combinar com a loja</span></div>`:''}
-        <div class="tot g"><span>Total</span><span class="price">${brl(sub)}</span></div>
+        ${f.mode.value==='entrega'?`<div class="tot"><span>Taxa de entrega</span><span class="price">${fee ? brl(fee) : 'Grátis'}</span></div>`:''}
+        <div class="tot g"><span>Total</span><span class="price">${brl(sub + feeFor(f.mode.value))}</span></div>
         ${sub<min?`<p class="small" style="color:#b42318">Pedido mínimo: ${brl(min)}. Faltam ${brl(min-sub)}.</p>`:''}`;
       $('#send').disabled = !open || sub < min;
     };
@@ -357,7 +360,8 @@ async function Menu(slug){
       L.push(`*Novo pedido — ${st.name}*`, '');
       cart.forEach(l => { const p=P.get(l.id); L.push(`${l.qty}x ${p.name} — ${brl(p.price_cents*l.qty)}`); if(l.obs) L.push(`   _Obs: ${l.obs}_`); });
       L.push('', `*Subtotal:* ${brl(subtotal())}`);
-      if (v.mode==='entrega') L.push('_Taxa de entrega: a combinar_');
+      if (v.mode==='entrega') L.push(`*Taxa de entrega:* ${fee ? brl(fee) : 'Grátis'}`);
+      L.push(`*Total:* ${brl(subtotal() + feeFor(v.mode))}`);
       L.push('', `*Cliente:* ${v.nome.trim()}`); if (v.tel.trim()) L.push(`*Telefone:* ${v.tel.trim()}`);
       if (v.mode==='entrega') L.push(`*Entrega:* ${v.rua.trim()}, ${v.num.trim()} — ${v.bairro.trim()}${v.comp.trim()?` (${v.comp.trim()})`:''}`);
       else if (v.mode==='mesa') L.push(`*Comer no local*${v.mesa?` — Mesa ${v.mesa}`:''}`);
@@ -585,6 +589,7 @@ async function Panel(storeId, mine = []){
         <label class="chk"><input type="checkbox" name="pick" ${st.accepts_pickup?'checked':''}> Cliente pode retirar no local</label>
         <label class="chk"><input type="checkbox" name="dine" ${st.accepts_dine_in?'checked':''}> Consumo no local (mesa)</label>
         <div class="row" style="margin-top:10px">
+          <label class="f">Taxa de entrega (R$) <span class="h">0,00 = entrega grátis</span><input class="in" name="fee" inputmode="decimal" value="${centsIn(st.delivery_fee_cents||0)}"></label>
           <label class="f">Pedido mínimo (R$)<input class="in" name="min" inputmode="decimal" value="${centsIn(st.min_order_cents||0)}"></label>
           <label class="f">Entrega: de (min)<input class="in" name="dmin" type="number" min="0" value="${st.delivery_minutes_min??''}"></label>
           <label class="f">até (min)<input class="in" name="dmax" type="number" min="0" value="${st.delivery_minutes_max??''}"></label></div>
@@ -598,13 +603,15 @@ async function Panel(storeId, mine = []){
       e.preventDefault(); const f=e.target, wa=digits(f.wa.value), min=toCents(f.min.value||'0');
       if (wa && (wa.length<10||wa.length>13)) return $('#smsg').textContent='WhatsApp inválido. Use DDD + número.';
       if (!f.del.checked && !f.pick.checked && !f.dine.checked) return $('#smsg').textContent='Escolha pelo menos uma forma de receber o pedido.';
+      const fee = toCents(f.fee.value || '0');
+      if (isNaN(fee) || fee < 0) return $('#smsg').textContent='Taxa de entrega inválida. Ex.: 5,00';
       $('#ss').disabled=true; $('#ss').textContent='Salvando…';
       try {
         if (lf) logo = await uploadImage(storeId, lf);
         if (cf) cover = await uploadImage(storeId, cf);
         const n = v => v===''?null:Math.max(0,parseInt(v,10));
         const { error } = await sb.from('stores').update({ name:f.name.value.trim(), whatsapp:wa||null, accent_color:f.color.value, logo_url:logo, cover_url:cover,
-          accepts_delivery:f.del.checked, accepts_pickup:f.pick.checked, accepts_dine_in:f.dine.checked, min_order_cents:isNaN(min)?0:min,
+          accepts_delivery:f.del.checked, accepts_pickup:f.pick.checked, accepts_dine_in:f.dine.checked, min_order_cents:isNaN(min)?0:min, delivery_fee_cents:fee,
           delivery_minutes_min:n(f.dmin.value), delivery_minutes_max:n(f.dmax.value), is_paused:f.paused.checked }).eq('id',storeId);
         if (error) throw error;
         toast('Loja atualizada'); refresh();
