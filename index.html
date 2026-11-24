@@ -431,7 +431,7 @@ async function Menu(slug){
         <button type="button" class="addmore" data-close>+ Adicionar mais itens</button>
         <div class="sec">Seus dados</div>
         <div class="row"><label class="f">Nome<input class="in" name="nome" required value="${esc(cust.nome||'')}" autocomplete="name"></label>
-        <label class="f">Telefone <span class="muted" style="font-weight:400">(opcional)</span><input class="in" name="tel" inputmode="tel" value="${esc(cust.tel||'')}" autocomplete="tel"></label></div>
+        <label class="f">Telefone <span class="muted" style="font-weight:400">(opcional)</span><input class="in" name="tel" type="tel" inputmode="tel" maxlength="20" placeholder="(35) 99999-8888" value="${esc(cust.tel||'')}" autocomplete="tel"></label></div>
         <div class="sec">Como você quer receber?</div>
         <div class="seg">${modes.map(m=>`<label><input type="radio" name="mode" value="${m[0]}" ${m[0]===mode0?'checked':''}>${m[1]}</label>`).join('')}</div>
         <div id="addr">
@@ -484,20 +484,30 @@ async function Menu(slug){
       const v = Object.fromEntries(new FormData(f));
       if (!v.nome.trim()) return f.nome.focus(), toast('Coloque seu nome');
       if (v.mode==='entrega' && (!v.rua.trim() || !v.num.trim() || !v.bairro.trim())) return toast('Preencha rua, número e bairro');
-      store.set('cliente', { nome:v.nome, tel:v.tel, mode:v.mode, rua:v.rua, num:v.num, bairro:v.bairro, comp:v.comp, pag:v.pag });
-      const L = [];
-      L.push(`*Novo pedido — ${st.name}*`, '');
-      cart.forEach(l => { const p=P.get(l.id); L.push(`${l.qty}x ${p.name} — ${brl(p.price_cents*l.qty)}`); if(l.obs) L.push(`   _Obs: ${l.obs}_`); });
-      L.push('', `*Subtotal:* ${brl(subtotal())}`);
-      if (v.mode==='entrega') L.push(`*Taxa de entrega:* ${fee ? brl(fee) : 'Grátis'}`);
-      L.push(`*Total:* ${brl(subtotal() + feeFor(v.mode))}`);
-      L.push('', `*Cliente:* ${v.nome.trim()}`); if (v.tel.trim()) L.push(`*Telefone:* ${v.tel.trim()}`);
-      if (v.mode==='entrega') L.push(`*Entrega:* ${v.rua.trim()}, ${v.num.trim()} — ${v.bairro.trim()}${v.comp.trim()?` (${v.comp.trim()})`:''}`);
-      else if (v.mode==='mesa') L.push(`*Comer no local*${v.mesa?` — Mesa ${v.mesa}`:''}`);
-      else L.push('*Retirada no local*');
+      const telD = digits(v.tel).replace(/^55(?=\d{10,11}$)/, '');
+      if (v.tel.trim() && (telD.length < 10 || telD.length > 11)) return f.tel.focus(), toast('Telefone inválido. Use DDD + número, ex.: (35) 99999-8888');
+      const telFmt = telD ? `(${telD.slice(0,2)}) ${telD.slice(2,-4)}-${telD.slice(-4)}` : '';
+      store.set('cliente', { nome:v.nome, tel:telFmt, mode:v.mode, rua:v.rua, num:v.num, bairro:v.bairro, comp:v.comp, pag:v.pag });
+      const SEP = '------------------------------';
+      const now = new Date();
+      const quando = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
       const tc = toCents(v.troco);
-      L.push(`*Pagamento:* ${v.pag}${v.pag==='Dinheiro' && tc>0 ? ` (troco para ${brl(tc)})` : ''}`);
-      if (v.obs.trim()) L.push(`*Obs.:* ${v.obs.trim()}`);
+      const L = [`*NOVO PEDIDO*`, `*${st.name}*`, quando, SEP, '*Itens*'];
+      cart.forEach(l => { const p=P.get(l.id); L.push(`${l.qty}x ${p.name} — ${brl(p.price_cents*l.qty)}`); if(l.obs) L.push(`   _Obs: ${l.obs}_`); });
+      L.push(SEP, `Subtotal: ${brl(subtotal())}`);
+      if (v.mode==='entrega') L.push(`Taxa de entrega: ${fee ? brl(fee) : 'Grátis'}`);
+      L.push(`*Total: ${brl(subtotal() + feeFor(v.mode))}*`);
+      L.push(SEP, '*Cliente*', `Nome: ${v.nome.trim()}`);
+      if (telFmt) L.push(`Telefone: ${telFmt}`);
+      L.push(SEP);
+      if (v.mode==='entrega') {
+        L.push('*Entrega*', `${v.rua.trim()}, ${v.num.trim()}`, `Bairro: ${v.bairro.trim()}`);
+        if (v.comp.trim()) L.push(`Complemento: ${v.comp.trim()}`);
+      } else if (v.mode==='mesa') L.push('*Consumo no local*', v.mesa ? `Mesa: ${v.mesa}` : 'Mesa: não informada');
+      else L.push('*Retirada no local*');
+      L.push(SEP, '*Pagamento*', `${v.pag} (${v.mode==='entrega' ? 'na entrega' : 'no local'})`);
+      if (v.pag==='Dinheiro') L.push(tc > 0 ? `Troco para: ${brl(tc)}` : 'Sem troco');
+      if (v.obs.trim()) L.push(SEP, '*Observação*', v.obs.trim());
       if (!st.whatsapp) return toast('A loja ainda não cadastrou o WhatsApp');
       const url = `https://wa.me/${waNumber(st.whatsapp)}?text=${encodeURIComponent(L.join('\n'))}`;
       cart = []; save(); closeModal();
