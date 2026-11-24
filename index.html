@@ -379,9 +379,11 @@ async function Menu(slug){
 async function Admin(){
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return Landing();
-  const { data: mem } = await sb.from('store_members').select('store_id').eq('user_id', session.user.id).limit(1);
+  const { data: mem } = await sb.from('store_members').select('store_id, stores(name)').eq('user_id', session.user.id);
   if (!mem?.length) return CreateStore(session);
-  Panel(mem[0].store_id);
+  const mine = mem.map(m => ({ id: m.store_id, name: m.stores?.name || 'Loja' })).sort((a,b) => a.name.localeCompare(b.name));
+  const pref = store.get('loja-atual', null);
+  Panel(mine.some(m => m.id === pref) ? pref : mine[0].id, mine);
 }
 sb.auth.onAuthStateChange((ev) => { if (!SLUG && (ev==='SIGNED_IN'||ev==='SIGNED_OUT')) Admin(); });
 
@@ -410,7 +412,9 @@ function Landing(){
     try {
       if (mode==='login') { const {error} = await sb.auth.signInWithPassword({email,password}); if(error) throw error; }
       else { const {data,error} = await sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}}); if(error) throw error;
-        if (!data.session) $('#amsg').textContent = 'Conta criada! Enviamos um link pro seu email. Confirme e depois clique em Entrar.'; }
+        if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0)
+          $('#amsg').textContent = 'Esse email já tem conta. Clique em "Entrar" e use sua senha.';
+        else if (!data.session) $('#amsg').textContent = 'Conta criada! Enviamos um link pro seu email (olhe também o spam). Confirme e depois clique em Entrar.'; }
     } catch(err) { $('#amsg').textContent = errMsg(err); }
     $('#ab').disabled = false;
   };
@@ -442,7 +446,8 @@ function CreateStore(session){
   };
 }
 
-async function Panel(storeId){
+async function Panel(storeId, mine = []){
+  store.set('loja-atual', storeId);
   let st, cats=[], prods=[], tab = store.get('tab','produtos');
   async function load(){
     const [a,b,c] = await Promise.all([
@@ -455,7 +460,9 @@ async function Panel(storeId){
   await load();
   function frame(){
     app.innerHTML = `<header class="top"><div class="wrap">
-      <div class="brand"><i></i>${esc(st.name)}</div>
+      <div class="brand"><i></i>${mine.length > 1
+        ? `<select class="in" id="sw" aria-label="Trocar de loja" style="margin:0;min-height:40px;font-weight:800;width:auto">${mine.map(m => `<option value="${esc(m.id)}" ${m.id===storeId?'selected':''}>${esc(m.name)}</option>`).join('')}</select>`
+        : esc(st.name)}</div>
       <a class="btn soft sm" href="${esc(menuLink(st.slug))}" target="_blank" rel="noopener">Ver cardápio</a>
       <button class="btn ghost sm" id="out">Sair</button></div></header>
       <div class="pw">
@@ -467,6 +474,7 @@ async function Panel(storeId){
         <nav class="tabs" id="tb">${[['produtos','Produtos'],['categorias','Categorias'],['loja','Minha loja']].map(t=>`<button data-t="${t[0]}" class="${tab===t[0]?'on':''}">${t[1]}</button>`).join('')}</nav>
         <div id="body"></div></div>`;
     $('#out').onclick = () => sb.auth.signOut();
+    $('#sw') && ($('#sw').onchange = e => Panel(e.target.value, mine));
     $('#cp').onclick = async () => { try { await navigator.clipboard.writeText(menuLink(st.slug)); toast('Link copiado!'); } catch { toast('Selecione o link e copie'); } };
     $('#tb').onclick = e => { const b=e.target.closest('[data-t]'); if(!b) return; tab=b.dataset.t; store.set('tab',tab); frame(); };
     ({produtos:Products, categorias:Categories, loja:Settings})[tab]();
