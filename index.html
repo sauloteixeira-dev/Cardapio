@@ -89,31 +89,49 @@ textarea.in{min-height:80px;resize:vertical}
 .bar .tt{font:800 22px/1 var(--disp);background:var(--ac);color:var(--on-ac);padding:10px 14px;border-radius:11px}
 .foot{padding:36px 16px 120px;text-align:center;color:var(--mut);font-size:13px}
 
-/* Sheet / modal */
+/* Sheet / modal: cabeçalho e rodapé fixos, só o meio rola */
 .ov{position:fixed;inset:0;background:rgba(20,14,8,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:#fff;width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;animation:up .22s ease}
-@media(min-width:700px){.ov{align-items:center}.sheet{border-radius:22px}}
+.sheet{background:#fff;width:100%;max-width:560px;max-height:94dvh;display:flex;flex-direction:column;overflow:hidden;border-radius:22px 22px 0 0;animation:up .22s ease}
+.sheet .sc{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#d8d1c8 transparent}
+.sheet .sc::-webkit-scrollbar{width:8px}.sheet .sc::-webkit-scrollbar-thumb{background:#d8d1c8;border-radius:8px;border:2px solid #fff}
+@media(min-width:700px){.ov{align-items:center;padding:24px}.sheet{border-radius:22px;max-height:min(88vh,860px)}}
+@media(min-width:900px){
+  .ov.side{justify-content:flex-end;align-items:stretch;padding:0}
+  .ov.side .sheet{max-width:460px;max-height:none;height:100dvh;border-radius:0;animation:side .25s ease}
+}
 @keyframes up{from{transform:translateY(40px);opacity:0}}
-@media(prefers-reduced-motion:reduce){.sheet{animation:none}}
-.sheet .hd{position:sticky;top:0;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);z-index:2}
-.sheet .hd h3{margin:0;font:800 26px/1 var(--disp)}
-.x{width:44px;height:44px;border-radius:50%;border:0;background:#f3efea;font-size:22px;line-height:1}
-.sheet .bd{padding:16px}
-.sheet .ft{position:sticky;bottom:0;background:#fff;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;gap:12px;align-items:center}
-.big{width:100%;aspect-ratio:16/10;object-fit:cover;background:#f1ece6}
+@keyframes side{from{transform:translateX(40px);opacity:0}}
+@media(prefers-reduced-motion:reduce){.sheet,.ov.side .sheet{animation:none}}
+.sheet .hd{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px 14px 20px;border-bottom:1px solid var(--line)}
+.sheet .hd h3{margin:0;font:800 28px/1 var(--disp)}
+.x{width:44px;height:44px;flex:none;border-radius:50%;border:0;background:#f3efea;font-size:22px;line-height:1}
+.sheet .bd{padding:4px 20px 20px}
+.sheet .ft{flex:none;background:#fff;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.ft .sum{display:flex;flex-direction:column;line-height:1.1;min-width:96px}
+.ft .sum span{font-size:13px;color:var(--mut)}
+.ft .sum b{font:800 26px/1 var(--disp)}
+.ft .btn{flex:1 1 170px;min-height:52px;white-space:nowrap}
+@media(max-width:360px){.ft .btn{font-size:15px;padding:0 12px}.ft .sum b{font-size:23px}}
+.ft .warn{flex-basis:100%;margin:0;font-size:13.5px;color:#b42318}
+.big{width:100%;aspect-ratio:16/10;max-height:46vh;object-fit:cover;background:#f1ece6}
 .qty{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:12px;flex:none}
-.qty button{width:44px;height:44px;border:0;background:none;font-size:22px;color:var(--ac);font-weight:700}
+.qty button{width:44px;height:44px;border:0;background:none;font-size:22px;color:var(--ac);font-weight:700;display:grid;place-items:center}
+.qty svg{width:19px;height:19px}
 .qty span{min-width:28px;text-align:center;font-weight:700}
-.line{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
-.line .t{flex:1}.line .obs{font-size:13px;color:var(--mut)}
+.line{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:start;padding:14px 0;border-bottom:1px dashed var(--line)}
+.line b{font:800 20px/1.1 var(--disp)}.line .obs{font-size:13px;color:var(--mut);margin-top:2px}
+.line .lp{font:800 20px/1.1 var(--disp);white-space:nowrap;text-align:right}
+.line .qty{grid-column:1;justify-self:start;margin-top:8px}
 .seg{display:flex;gap:8px;margin:6px 0 14px;flex-wrap:wrap}
-.seg label{flex:1 1 120px;display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border:1.5px solid var(--line);border-radius:12px;font-weight:600;cursor:pointer;font-size:15px}
+.seg label{flex:1 1 0;min-width:96px;text-align:center;padding:0 8px;display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border:1.5px solid var(--line);border-radius:12px;font-weight:600;cursor:pointer;font-size:15px}
 .seg input{position:absolute;opacity:0}
 .seg label:has(input:checked){border-color:var(--ac);background:color-mix(in srgb,var(--ac) 8%,#fff);color:var(--ac)}
 .seg label:has(input:focus-visible){outline:3px solid color-mix(in srgb,var(--ac) 45%,transparent)}
 .tot{display:flex;justify-content:space-between;font-size:15px;padding:4px 0}
 .tot.g{font-size:19px;font-weight:800;padding-top:8px}
-.sec{font-size:13px;font-weight:800;color:var(--mut);margin:20px 0 8px;text-transform:none;letter-spacing:.01em}
+.sec{font:800 22px/1.1 var(--disp);margin:26px 0 10px}
+.sec small{font:500 14px 'Instrument Sans',sans-serif;color:var(--mut);margin-left:6px}
+.addmore{display:inline-flex;align-items:center;min-height:44px;margin-top:6px;padding:0;border:0;background:none;color:var(--ac);font-weight:700}
 
 /* ===== Painel ===== */
 .top{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
@@ -167,6 +185,7 @@ const app = $('#app'), modal = $('#modal');
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const brl = c => (c / 100).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
 const toCents = s => { const n = parseFloat(String(s).replace(/[^\d,.-]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.')); return isNaN(n) ? NaN : Math.round(n*100); };
+const TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3"/></svg>';
 const priceHTML = c => { const [r,d] = (c/100).toFixed(2).split('.'); return `<small>R$</small>${Number(r).toLocaleString('pt-BR')},${d}`; };
 const centsIn = c => (c/100).toFixed(2).replace('.',',');
 const digits = s => String(s||'').replace(/\D/g,'');
@@ -180,7 +199,7 @@ function setAccent(c){
   const [R,G,B]=[1,3,5].map(i=>{const v=parseInt(c.slice(i,i+2),16)/255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4});
   r.setProperty('--on-ac', (0.2126*R+0.7152*G+0.0722*B) > 0.45 ? '#1c1813' : '#fff');
 }
-function openModal(html){ modal.innerHTML = `<div class="ov" data-close>${html}</div>`; document.body.style.overflow='hidden'; }
+function openModal(html, cls=''){ modal.innerHTML = `<div class="ov ${cls}" data-close>${html}</div>`; document.body.style.overflow='hidden'; }
 function closeModal(){ modal.innerHTML=''; document.body.style.overflow=''; }
 modal.addEventListener('click', e => { if (e.target.matches('[data-close]') || e.target.closest('.x')) closeModal(); });
 document.addEventListener('keydown', e => { if (e.key==='Escape' && modal.innerHTML) closeModal(); });
@@ -299,13 +318,13 @@ async function Menu(slug){
     let qty = 1;
     openModal(`<div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(p.name)}">
       <div class="hd"><h3>${esc(p.name)}</h3><button class="x" aria-label="Fechar">×</button></div>
-      ${p.image_url?`<img class="big" src="${esc(p.image_url)}" alt="">`:''}
-      <div class="bd">
+      <div class="sc">${p.image_url?`<img class="big" src="${esc(p.image_url)}" alt="">`:''}
+      <div class="bd" style="padding-top:16px">
         ${p.description?`<p class="muted" style="margin-top:0">${esc(p.description)}</p>`:''}
         <p class="price" style="font-size:20px">${brl(p.price_cents)}</p>
         <label class="f">Alguma observação? <span class="h">Ex.: sem cebola, ponto da carne…</span>
           <textarea class="in" id="obs" maxlength="140"></textarea></label>
-      </div>
+      </div></div>
       <div class="ft"><div class="qty"><button id="m" aria-label="Diminuir">−</button><span id="qv">1</span><button id="pl" aria-label="Aumentar">+</button></div>
         <button class="btn" style="flex:1" id="add">Adicionar <span class="price" id="at">${brl(p.price_cents)}</span></button></div>
     </div>`);
@@ -322,34 +341,35 @@ async function Menu(slug){
 
   function cartSheet(){
     const cust = store.get('cliente', {});
-    const modes = [st.accepts_delivery && ['entrega','Entrega'], st.accepts_pickup && ['retirada','Retirar no local'], st.accepts_dine_in && ['mesa','Comer no local']].filter(Boolean);
+    const modes = [st.accepts_delivery && ['entrega','Entrega'], st.accepts_pickup && ['retirada','Retirada'], st.accepts_dine_in && ['mesa','Na mesa']].filter(Boolean);
     if (!modes.length) modes.push(['entrega','Entrega']);
     const mode0 = modes.find(m=>m[0]===cust.mode) ? cust.mode : modes[0][0];
-    openModal(`<div class="sheet" role="dialog" aria-modal="true" aria-label="Sua sacola">
-      <div class="hd"><h3>Sua sacola</h3><button class="x" aria-label="Fechar">×</button></div>
-      <form class="bd" id="ck" novalidate>
+    openModal(`<div class="sheet" role="dialog" aria-modal="true" aria-label="Seu pedido">
+      <div class="hd"><h3>Seu pedido</h3><button class="x" aria-label="Fechar">×</button></div>
+      <form class="sc bd" id="ck" novalidate>
         <div id="lines"></div>
-        <div style="padding:10px 0"><button type="button" class="btn soft sm" data-close>+ Adicionar mais itens</button></div>
-        <div class="sec">SEUS DADOS</div>
+        <button type="button" class="addmore" data-close>+ Adicionar mais itens</button>
+        <div class="sec">Seus dados</div>
         <div class="row"><label class="f">Nome<input class="in" name="nome" required value="${esc(cust.nome||'')}" autocomplete="name"></label>
-        <label class="f">Telefone <span class="h">opcional</span><input class="in" name="tel" inputmode="tel" value="${esc(cust.tel||'')}" autocomplete="tel"></label></div>
-        <div class="sec">COMO VOCÊ QUER RECEBER?</div>
+        <label class="f">Telefone <span class="muted" style="font-weight:400">(opcional)</span><input class="in" name="tel" inputmode="tel" value="${esc(cust.tel||'')}" autocomplete="tel"></label></div>
+        <div class="sec">Como você quer receber?</div>
         <div class="seg">${modes.map(m=>`<label><input type="radio" name="mode" value="${m[0]}" ${m[0]===mode0?'checked':''}>${m[1]}</label>`).join('')}</div>
         <div id="addr">
           <div class="row"><label class="f" style="flex:3 1 200px">Rua<input class="in" name="rua" value="${esc(cust.rua||'')}" autocomplete="address-line1"></label>
           <label class="f" style="flex:1 1 90px">Número<input class="in" name="num" value="${esc(cust.num||'')}"></label></div>
           <div class="row"><label class="f">Bairro<input class="in" name="bairro" value="${esc(cust.bairro||'')}"></label>
-          <label class="f">Complemento / referência<input class="in" name="comp" value="${esc(cust.comp||'')}"></label></div>
+          <label class="f">Complemento <span class="muted" style="font-weight:400">(opcional)</span><input class="in" name="comp" value="${esc(cust.comp||'')}" placeholder="Apto, ponto de referência"></label></div>
         </div>
-        <label class="f hide" id="mesaF">Mesa<input class="in" name="mesa" inputmode="numeric"></label>
-        <div class="sec">PAGAMENTO <span style="font-weight:500">(na entrega ou retirada)</span></div>
-        <div class="seg">${['Pix','Dinheiro','Cartão'].map((m,i)=>`<label><input type="radio" name="pag" value="${m}" ${(cust.pag||'Pix')===m?'checked':''}>${m}</label>`).join('')}</div>
-        <label class="f hide" id="trocoF">Troco para quanto? <span class="h">Deixe vazio se não precisar</span><input class="in" name="troco" inputmode="decimal" placeholder="Ex.: 100"></label>
-        <label class="f">Observação do pedido <span class="h">opcional</span><textarea class="in" name="obs" maxlength="200"></textarea></label>
+        <label class="f hide" id="mesaF">Número da mesa<input class="in" name="mesa" inputmode="numeric"></label>
+        <div class="sec">Pagamento <small>na entrega ou retirada</small></div>
+        <div class="seg">${['Pix','Dinheiro','Cartão'].map(m=>`<label><input type="radio" name="pag" value="${m}" ${(cust.pag||'Pix')===m?'checked':''}>${m}</label>`).join('')}</div>
+        <label class="f hide" id="trocoF">Troco para quanto? <span class="muted" style="font-weight:400">(deixe vazio se não precisar)</span><input class="in" name="troco" inputmode="decimal" placeholder="Ex.: 100"></label>
+        <label class="f" style="margin-top:6px">Observação do pedido <span class="muted" style="font-weight:400">(opcional)</span><textarea class="in" name="obs" maxlength="200"></textarea></label>
         <div id="tots"></div>
       </form>
-      <div class="ft"><button class="btn wide" id="send" ${open?'':'disabled'}>${open?'Enviar pedido no WhatsApp':'Loja fechada no momento'}</button></div>
-    </div>`);
+      <div class="ft"><p class="warn hide" id="warn"></p><div class="sum"><span>Total</span><b id="ftT"></b></div>
+        <button class="btn" id="send" ${open?'':'disabled'}>${open?'Enviar pelo WhatsApp':'Loja fechada agora'}</button></div>
+    </div>`, 'side');
     const f = $('#ck');
     const sync = () => {
       const m = f.mode.value, pag = f.pag.value;
@@ -360,13 +380,16 @@ async function Menu(slug){
     const draw = () => {
       if (!cart.length) { closeModal(); return; }
       $('#lines').innerHTML = cart.map((l,i) => { const p=P.get(l.id); return `<div class="line">
-        <div class="t"><b>${esc(p.name)}</b>${l.obs?`<div class="obs">Obs: ${esc(l.obs)}</div>`:''}<div class="price small">${brl(p.price_cents*l.qty)}</div></div>
-        <div class="qty"><button type="button" data-d="${i}" aria-label="Diminuir">${l.qty>1?'−':'🗑'}</button><span>${l.qty}</span><button type="button" data-i="${i}" aria-label="Aumentar">+</button></div></div>`; }).join('');
+        <div><b>${esc(p.name)}</b>${l.obs?`<div class="obs">Obs: ${esc(l.obs)}</div>`:''}</div>
+        <div class="lp">${brl(p.price_cents*l.qty)}</div>
+        <div class="qty"><button type="button" data-d="${i}" aria-label="${l.qty>1?'Diminuir':'Remover'}">${l.qty>1?'−':TRASH}</button><span>${l.qty}</span><button type="button" data-i="${i}" aria-label="Aumentar">+</button></div></div>`; }).join('');
       const sub = subtotal(), min = st.min_order_cents||0;
-      $('#tots').innerHTML = `<div class="tot"><span>Subtotal</span><span class="price">${brl(sub)}</span></div>
+      $('#tots').innerHTML = `<div style="margin-top:22px;padding-top:12px;border-top:1px solid var(--line)"></div><div class="tot"><span>Subtotal</span><span class="price">${brl(sub)}</span></div>
         ${f.mode.value==='entrega'?`<div class="tot"><span>Taxa de entrega</span><span class="price">${fee ? brl(fee) : 'Grátis'}</span></div>`:''}
-        <div class="tot g"><span>Total</span><span class="price">${brl(sub + feeFor(f.mode.value))}</span></div>
-        ${sub<min?`<p class="small" style="color:#b42318">Pedido mínimo: ${brl(min)}. Faltam ${brl(min-sub)}.</p>`:''}`;
+`;
+      $('#ftT').textContent = brl(sub + feeFor(f.mode.value));
+      $('#warn').textContent = sub<min ? `Pedido mínimo de ${brl(min)}. Faltam ${brl(min-sub)}.` : '';
+      $('#warn').classList.toggle('hide', sub>=min);
       $('#send').disabled = !open || sub < min;
     };
     $('#lines').addEventListener('click', e => {
@@ -535,7 +558,7 @@ async function Panel(storeId, mine = []){
     const isNew = !p; p = p || { name:'', description:'', price_cents:0, category_id:cats[0].id, image_url:null, active:true };
     let img = p.image_url, file = null;
     openModal(`<div class="sheet" role="dialog" aria-modal="true"><div class="hd"><h3>${isNew?'Novo produto':'Editar produto'}</h3><button class="x" aria-label="Fechar">×</button></div>
-      <form class="bd" id="pf">
+      <form class="sc bd" id="pf" style="padding-top:16px">
         <div class="pick"><div class="pv" id="pv" style="${img?`background-image:url('${esc(img)}')`:''}">${img?'':'Sem foto'}</div>
           <div><label class="btn soft sm" style="cursor:pointer">Escolher foto<input type="file" accept="image/*" id="fi" class="hide"></label>
           ${img?'<button type="button" class="btn ghost sm" id="rm" style="margin-left:6px">Tirar foto</button>':''}<p class="small muted" style="margin:6px 0 0">A foto é reduzida automaticamente.</p></div></div>
