@@ -291,6 +291,7 @@ const menuLink = slug => location.origin + location.pathname + '?loja=' + encode
 
 // ====== ROUTER ======
 const SLUG = new URLSearchParams(location.search).get('loja');
+let adminRun = 0, lastUser;
 if (SLUG) Menu(SLUG); else Admin();
 
 // =====================================================================
@@ -520,7 +521,12 @@ async function Menu(slug){
 //  PAINEL DO LOJISTA
 // =====================================================================
 async function Admin(){
+  const run = ++adminRun;
   const { data: { session } } = await sb.auth.getSession();
+  if (run !== adminRun) return;
+  lastUser = session?.user?.id || null;
+  // Tira o token do endereço depois de voltar do link de confirmação
+  if (/access_token=|type=signup|error_description=/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
   if (!session) return Landing();
   const { data: isAdm } = await sb.rpc('is_platform_admin');
   if (isAdm === true) return PlatformAdmin(session);
@@ -530,7 +536,13 @@ async function Admin(){
   const pref = store.get('loja-atual', null);
   Panel(mine.some(m => m.id === pref) ? pref : mine[0].id, mine);
 }
-sb.auth.onAuthStateChange((ev) => { if (!SLUG && (ev==='SIGNED_IN'||ev==='SIGNED_OUT')) Admin(); });
+// Não chamar o Supabase direto dentro deste aviso: a biblioteca ainda está processando o login
+// e as duas chamadas ficariam esperando uma pela outra (página em branco ao voltar do email).
+sb.auth.onAuthStateChange((ev, session) => {
+  if (SLUG) return;
+  const uid = session?.user?.id || null;
+  if ((ev === 'SIGNED_IN' || ev === 'SIGNED_OUT') && uid !== lastUser) { lastUser = uid; setTimeout(Admin, 0); }
+});
 
 function Landing(){
   let mode = 'login';
